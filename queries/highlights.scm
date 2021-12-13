@@ -33,13 +33,13 @@
  ] @keyword
 (function_definition name: (symbol) @function)
 (function_definition parameters: (list (symbol) @variable.parameter))
-(function_definition docstring: (string) @comment)
+(function_definition docstring: (string) @doc)
 
 ;; Highlight macro definitions the same way as function definitions.
 "defmacro" @keyword
 (macro_definition name: (symbol) @function)
 (macro_definition parameters: (list (symbol) @variable.parameter))
-(macro_definition docstring: (string) @comment)
+(macro_definition docstring: (string) @doc)
 
 (comment) @comment
 
