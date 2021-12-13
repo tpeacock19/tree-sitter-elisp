@@ -65,9 +65,9 @@
  ",@"
  ] @operator
 
-
-( (symbol) @function.macro
-  (.match? @function.macro "^(use-package|disable|general-with-eval-after-load|general--ensure-lists|general-emacs-define-key|general-evil-define-key|general-def|general-create-definer|general-defs|general-unbind|general--save-state|general-key|general-simulate-keys|general-simulate-key|general-key-dispatch|general-predicate-dispatch|general-swap-key|general-lambda|general-setq|general-setq-default|general-pushnew|general-with-package|general-after-gui|general-after-tty|general-after-init|general-after|general-extended-def-:wk|general-extended-def-:prefix-map|general-l|general-setq-local|general-add-advice|general-remove-advice|general-with|imap|emap|nmap|vmap|mmap|omap|rmap|iemap|nvmap|itomap|otomap|tomap|use-package-normalize/:ghook|use-package-handler/:gfhook)$"))
+;; package specific macros
+((symbol) @function.macro
+ (.match? @function.macro "^(use-package|disable|general-with-eval-after-load|general--ensure-lists|general-emacs-define-key|general-evil-define-key|general-def|general-create-definer|general-defs|general-unbind|general--save-state|general-key|general-simulate-keys|general-simulate-key|general-key-dispatch|general-predicate-dispatch|general-swap-key|general-lambda|general-setq|general-setq-default|general-pushnew|general-with-package|general-after-gui|general-after-tty|general-after-init|general-after|general-extended-def-:wk|general-extended-def-:prefix-map|general-l|general-setq-local|general-add-advice|general-remove-advice|general-with|imap|emap|nmap|vmap|mmap|omap|rmap|iemap|nvmap|itomap|otomap|tomap|use-package-normalize/:ghook|use-package-handler/:gfhook)$"))
 
 ;; macros from std directory lisp/emacs-lisp
 ( (symbol) @keyword
@@ -88,26 +88,37 @@
  ((quote) @function
   (.match? @function "^#'")))
 
-(["("] @punctuation
- ((quote) @variable
-  (.match? @variable ".*")))
-
-
 ((symbol) @type
  (.match? @type "^&"))
 
+
+((quote) @variable
+ (.match? @variable "^'\\("))
+
+(["("] @punctuation.bracket
+ .
+ ["and" "catch" "cond" "condition-case" "defconst"
+  "defvar" "function" "if" "interactive" "lambda" "let"
+  "let*" "or" "prog1" "prog2" "progn" "quote"
+  "save-current-buffer" "save-excursion" "save-restriction"
+  "setq" "setq-default" "unwind-protect" "while"
+  ]
+ @keyword
+ (symbol) @variable
+ (.match? @variable ".*"))
 
 (["("]
  @punctuation.bracket
  .
  (symbol) @function
+ .
  (.match? @function ".*"))
 
-;; ((symbol ) @keyword
-;;  (.match? @keyword "^:"))
-
-((quote) @variable
- (.match? @variable "^'\\("))
+(["("] @punctuation.bracket
+ (symbol) @variable
+ .
+ (symbol) @variable
+ (.match? @variable ".*"))
 
 ;; Highlight nil and t as constants, unlike other symbols
 [
@@ -116,4 +127,4 @@
  ] @constant.builtin
 
 (quote) @variable
-(symbol ) @variable
+(symbol) @variable
