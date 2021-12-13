@@ -27,6 +27,9 @@
       "scope": "source.emacs.lisp",
       "file-types": [
         "el"
+      ],
+      "highlights": [
+        "queries/highlights.scm"
       ]
     }
   ]
