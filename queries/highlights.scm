@@ -66,8 +66,8 @@
  ] @operator
 
 
-( (symbol) @keyword
-  (.match? @keyword "^(use-package|disable|general-with-eval-after-load|general--ensure-lists|general-emacs-define-key|general-evil-define-key|general-def|general-create-definer|general-defs|general-unbind|general--save-state|general-key|general-simulate-keys|general-simulate-key|general-key-dispatch|general-predicate-dispatch|general-swap-key|general-lambda|general-setq|general-setq-default|general-pushnew|general-with-package|general-after-gui|general-after-tty|general-after-init|general-after|general-extended-def-:wk|general-extended-def-:prefix-map|general-l|general-setq-local|general-add-advice|general-remove-advice|general-with|imap|emap|nmap|vmap|mmap|omap|rmap|iemap|nvmap|itomap|otomap|tomap|use-package-normalize/:ghook|use-package-handler/:gfhook)$"))
+( (symbol) @function.macro
+  (.match? @function.macro "^(use-package|disable|general-with-eval-after-load|general--ensure-lists|general-emacs-define-key|general-evil-define-key|general-def|general-create-definer|general-defs|general-unbind|general--save-state|general-key|general-simulate-keys|general-simulate-key|general-key-dispatch|general-predicate-dispatch|general-swap-key|general-lambda|general-setq|general-setq-default|general-pushnew|general-with-package|general-after-gui|general-after-tty|general-after-init|general-after|general-extended-def-:wk|general-extended-def-:prefix-map|general-l|general-setq-local|general-add-advice|general-remove-advice|general-with|imap|emap|nmap|vmap|mmap|omap|rmap|iemap|nvmap|itomap|otomap|tomap|use-package-normalize/:ghook|use-package-handler/:gfhook)$"))
 
 ;; macros from std directory lisp/emacs-lisp
 ( (symbol) @keyword
@@ -80,6 +80,9 @@
 
 
 
+(["("] @punctuation
+ ((symbol) @keyword
+  (.match? @keyword "^:")))
 
 (["("] @punctuation
  ((quote) @function
@@ -100,9 +103,8 @@
  (symbol) @function
  (.match? @function ".*"))
 
-
-((symbol ) @keyword
- (.match? @keyword "^:"))
+;; ((symbol ) @keyword
+;;  (.match? @keyword "^:"))
 
 ((quote) @variable
  (.match? @variable "^'\\("))
