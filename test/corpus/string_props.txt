@@ -8,7 +8,8 @@ String text properties
 
 (source_file
   (string_text_properties
-    (string)
+    (string
+     (string_fragment))
     (integer)
     (integer)
     (list

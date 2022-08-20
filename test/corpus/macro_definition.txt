@@ -15,5 +15,6 @@ Macro definition
       (symbol)
       (symbol)
       (symbol))
-    (string)
+    (string
+     (string_fragment))
     (symbol)))

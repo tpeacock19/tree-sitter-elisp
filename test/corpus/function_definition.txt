@@ -24,7 +24,8 @@ Function definition
       (symbol)
       (symbol)
       (symbol))
-    (string)
+    (string
+     (string_fragment))
     (symbol))
   (function_definition
     (symbol)

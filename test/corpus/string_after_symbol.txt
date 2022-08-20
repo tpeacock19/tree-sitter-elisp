@@ -8,4 +8,5 @@ foo"bar"
 
 (source_file
   (symbol)
-  (string))
+    (string
+     (string_fragment)))

@@ -1,9 +1,5 @@
 const COMMENT = token(/;.*/);
 
-const STRING = token(
-  seq('"', repeat(choice(/[^"\\]/, seq("\\", /(.|\n)/))), '"')
-);
-
 // Symbols can contain any character when escaped:
 // https://www.gnu.org/software/emacs/manual/html_node/elisp/Symbol-Type.html
 // Most characters do not need escaping, but space and parentheses
@@ -54,6 +50,9 @@ module.exports = grammar({
         $.special_form,
         $.function_definition,
         $.macro_definition,
+        $.variable_definer,
+        $.constant_definer,
+        $.custom_definer,
         $.list,
         $.vector,
         $.hash_table,
@@ -65,6 +64,8 @@ module.exports = grammar({
         $.unquote
       ),
 
+    _setvar: ($) => seq($.symbol, $._sexp),
+
     special_form: ($) =>
       seq(
         "(",
@@ -73,8 +74,6 @@ module.exports = grammar({
           "catch",
           "cond",
           "condition-case",
-          "defconst",
-          "defvar",
           "function",
           "if",
           "interactive",
@@ -89,13 +88,78 @@ module.exports = grammar({
           "save-current-buffer",
           "save-excursion",
           "save-restriction",
-          "setq",
-          "setq-default",
           "unwind-protect",
           "while"
         ),
         repeat($._sexp),
         ")"
+      ),
+    variable_definer: ($) =>
+      prec(
+        1,
+        seq(
+          "(",
+          choice("defvar"),
+          field("name", $.symbol),
+          optional(field("initvalue", $._sexp)),
+          optional(field("docstring", $.string)),
+          ")"
+        )
+      ),
+    constant_definer: ($) =>
+      prec(
+        1,
+        seq(
+          "(",
+          choice("defconst"),
+          field("name", $.symbol),
+          field("initvalue", $._sexp),
+          optional(field("docstring", $.string)),
+          ")"
+        )
+      ),
+    custom_definer: ($) =>
+      prec(
+        1,
+        seq(
+          "(",
+          choice("defcustom"),
+          field("name", $.symbol),
+          optional(field("standard", $._sexp)),
+          optional(field("docstring", $.string)),
+          optional(repeat($.custom_args)),
+          ")"
+        )
+      ),
+    custom_args: ($) =>
+      choice(
+        prec.left(1, seq(":type", $._sexp)),
+        prec.left(1, seq(":options", $._sexp)),
+        prec.left(1, seq(":initialize", $.symbol)),
+        prec.left(1, seq(":set", $.symbol)),
+        prec.left(1, seq(":get", $.symbol)),
+        prec.left(1, seq(":require", $.symbol)),
+        prec.left(1, seq(":set-after", $.list)),
+        prec.left(1, seq(":risky", $.symbol)),
+        prec.left(1, seq(":safe", $.symbol)),
+        prec.left(1, seq(":local", $.symbol)),
+        prec.left(1, seq(":group", $.symbol)),
+        prec.left(1, seq(":link", $._sexp)),
+        prec.left(1, seq(":version", $.string)),
+        prec.left(1, seq(":package-version", $.list)),
+        prec.left(1, seq(":tag", $.string)),
+        prec.left(1, seq(":load", $.string))
+      ),
+
+    variable_setter: ($) =>
+      prec(
+        1,
+        seq(
+          "(",
+          choice("setq", "setq-local", "setq-default"),
+          repeat($._sexp),
+          ")"
+        )
       ),
 
     function_definition: ($) =>
@@ -155,7 +219,48 @@ module.exports = grammar({
         KEY_CHAR,
         META_OCTAL_CHAR
       ),
-    string: ($) => STRING,
+    // Here we tolerate unescaped newlines in double-quoted and
+    // single-quoted string literals.
+    // This is legal in typescript as jsx/tsx attribute values (as of
+    // 2020), and perhaps will be valid in javascript as well in the
+    // future.
+    //
+    string: ($) =>
+      seq(
+        '"',
+        repeat(
+          choice(
+            alias($.unescaped_double_string_fragment, $.string_fragment),
+            $.escape_sequence
+          )
+        ),
+        '"'
+      ),
+    // Workaround to https://github.com/tree-sitter/tree-sitter/issues/1156
+    // We give names to the token() constructs containing a regexp
+    // so as to obtain a node in the CST.
+    //
+    unescaped_double_string_fragment: ($) =>
+      token.immediate(prec(1, /[^"\\]+/)),
+
+    // same here
+    unescaped_single_string_fragment: ($) =>
+      token.immediate(prec(1, /[^'\\]+/)),
+
+    escape_sequence: ($) =>
+      token.immediate(
+        seq(
+          "\\",
+          choice(
+            /[^xu0-7]/,
+            /[0-7]{1,3}/,
+            /x[0-9a-fA-F]{2}/,
+            /u[0-9a-fA-F]{4}/,
+            /u{[0-9a-fA-F]+}/
+          )
+        )
+      ),
+
     byte_compiled_file_name: ($) => BYTE_COMPILED_FILE_NAME,
     symbol: ($) =>
       choice(
@@ -168,6 +273,8 @@ module.exports = grammar({
         "defun",
         "defsubst",
         "defmacro",
+        "defvar",
+        "defconst",
         ESCAPED_READER_SYMBOL,
         SYMBOL,
         INTERNED_EMPTY_STRING
