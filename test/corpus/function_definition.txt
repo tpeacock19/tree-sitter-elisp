@@ -7,49 +7,53 @@ Function definition
   x)
 (defsubst bar () nil)
 
-(defun no-args nil 123)
+(cl-defun no-args () 123)
 
 `(defun ,x () ,@body)
 
-'(defun 1)
-'(defun)
+'(cl-defun 1)
+'(cl-defun)
 '(defun foo)
 
 --------------------------------------------------------------------------------
 
-(source_file
-  (function_definition
+(source
+ (function_definition
+  (defun_header (symbol)
     (symbol)
     (list
-      (symbol)
-      (symbol)
-      (symbol))
-    (string
-     (string_fragment))
-    (symbol))
-  (function_definition
-    (symbol)
-    (list)
-    (symbol))
-  (function_definition
+     (cons (symbol)
+           (cons (symbol)
+                 (cons (symbol))))))
+  (string
+   (string_fragment))
+  (symbol))
+ (function_definition
+  (defun_header
     (symbol)
     (symbol)
-    (integer))
-  (quote
-    (list
-      (symbol)
-      (unquote
-        (symbol))
-      (list)
-      (unquote_splice
-        (symbol))))
-  (quote
-    (list
-      (symbol)
-      (integer)))
-  (quote
-    (list
-      (symbol)))
-  (quote
-    (function_definition
-      (symbol))))
+    (list))
+  (symbol (boolean)))
+ (function_definition
+  (defun_header (symbol)
+    (symbol)
+    (list))
+  (number
+   (integer)))
+ (backquote
+  (list
+   (cons (symbol)
+         (cons (backquote_eval (symbol))
+               (cons (list)
+                     (cons (splice (symbol))))))))
+ (quote
+  (list
+   (cons (symbol)
+         (cons (number (integer))))))
+ (quote
+  (list
+   (cons (symbol))))
+ (quote
+  (list
+   (cons (symbol)
+         (cons (symbol))))))

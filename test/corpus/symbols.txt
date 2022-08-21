@@ -20,16 +20,17 @@ foo{bar}
 &optional
 &&
 _
-##
 .foo
 foo-★
 1+
 \1
 nil
+\(*\ 1\ 2\)
++-*/_~!@$%^&=:<>{}
 
 --------------------------------------------------------------------------------
 
-(source_file
+(source
   (symbol)
   (symbol)
   (symbol)
@@ -52,5 +53,6 @@ nil
   (symbol)
   (symbol)
   (symbol)
+  (symbol (boolean))
   (symbol)
   (symbol))

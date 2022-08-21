@@ -3,8 +3,76 @@ Special read syntax
 ================================================================================
 
 #$
-
+##
+#:FOO
+#:FOO-BAR
+#1
+#0=(alpha)
+#0#
+#[256
+  "\211\204^G^@\300\262^A\301^A[!\207"
+  [1 forward-sexp]
+  3
+  1793299
+  "^p"]
+#<subr car>
+#s(foo Z Z)
+(#1=(a) b #1#)
 --------------------------------------------------------------------------------
 
-(source_file
+(source
+ (special_syntax
   (byte_compiled_file_name))
+ (special_syntax
+  (interned_empty_string))
+ (special_syntax
+  (uninterned_symbol
+   (symbol_name)))
+ (special_syntax
+  (uninterned_symbol
+   (symbol_name)))
+ (special_syntax
+  (circular_loop))
+ (special_syntax
+  (circular_object
+   (name)
+   (list (cons (symbol)))))
+ (special_syntax
+  (circular_ref))
+ (bytecode
+  (number
+   (integer))
+  (string
+   (escape_sequence
+    (octal_esc))
+   (escape_sequence
+    (octal_esc))
+   (string_fragment)
+   (escape_sequence
+    (octal_esc))
+   (escape_sequence
+    (octal_esc))
+   (string_fragment)
+   (escape_sequence
+    (octal_esc))
+   (string_fragment)
+   (escape_sequence
+    (octal_esc)))
+  (vector
+   (number
+    (integer))
+   (symbol))
+  (number
+   (integer))
+  (number
+   (integer))
+  (string
+   (string_fragment)))
+ (no_read_syntax)
+ (record (symbol)
+         (symbol)
+         (symbol))
+ (list
+  (cons (special_syntax
+         (circular_object (name) (list (cons (symbol)))))
+        (cons (symbol) (cons (special_syntax (circular_ref)))))))

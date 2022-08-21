@@ -17,7 +17,8 @@
   "repository": "https://github.com/Wilfred/tree-sitter-elisp",
   "license": "MIT",
   "dependencies": {
-    "nan": "^2.15.0"
+    "nan": "^2.15.0",
+    "tree-sitter-clojure": "git+https://github.com/sogaiu/tree-sitter-clojure.git"
   },
   "devDependencies": {
     "tree-sitter-cli": "^0.20.0"

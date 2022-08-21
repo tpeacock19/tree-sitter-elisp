@@ -5,38 +5,90 @@ Characters
 ?x
 ?\\
 ?\(
-
-?\C-i
-?\M-i
-?\M-\151
-?\M-\C-i
-?\^i
-?\C-\M-\S-\H-\s-\A-i
-?\C-\;
-
-?\N{SNOWMAN}
+?\N{LATIN SMALL LETTER A}
 ?\N{U+61}
 ?\u0061
 ?\U00000061
 ?\x61
 ?\141
 
+?\C-
+
+?\C-x
+?\C-\\
+?\C-\(
+?\C-\N{LATIN SMALL LETTER A}
+?\C-\N{U+61}
+?\C-\u0061
+?\C-\U00000061
+?\C-\x61
+?\C-\141
+
+?\C-\M-x
+?\C-\M-\\
+?\C-\M-\(
+?\C-\M-\N{LATIN SMALL LETTER A}
+?\C-\M-\N{U+61}
+?\C-\M-\u0061
+?\C-\M-\U00000061
+?\C-\M-\x61
+?\C-\M-\141
+
+?\^
+
+?\^x
+?\^\\
+?\^\(
+?\^\N{LATIN SMALL LETTER A}
+?\^\N{U+61}
+?\^\u0061
+?\^\U00000061
+?\^\x61
+?\^\141
+
+?\C-\M-\S-\H-\s-\A-i
+(?\141)
+
 --------------------------------------------------------------------------------
 
-(source_file
-  (char)
-  (char)
-  (char)
-  (char)
-  (char)
-  (char)
-  (char)
-  (char)
-  (char)
-  (char)
-  (char)
-  (char)
-  (char)
-  (char)
-  (char)
-  (char))
+(source
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (char)
+ (list (cons (char))))

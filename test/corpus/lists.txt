@@ -3,23 +3,45 @@ Lists
 ================================================================================
 
 ()
+( )
 (foo (bar))
-(1 2 . nil)
+(1 2 . t)
 (foo .)
-
+'(;; comment
+  foo bar)
+((foo . bar)
+ (foo . bar))
+((foo . bar) 1)
 --------------------------------------------------------------------------------
 
-(source_file
-  (list)
+(source
+ (list)
+ (list)
+ (list
+  (cons (symbol)
+        (cons (list
+               (cons (symbol))))))
+ (list
+  (cons (number (integer))
+        (dotted_pair (number (integer))
+                     (dot)
+                     (symbol (boolean)))))
+ (list
+  (cons (symbol)
+        (cons (symbol (dot)))))
+ (quote
   (list
-    (symbol)
-    (list
-      (symbol)))
-  (list
-    (integer)
-    (integer)
-    (symbol)
-    (symbol))
-  (list
-    (symbol)
-    (symbol)))
+   (comment)
+   (cons (symbol)
+         (cons (symbol)))))
+ (list
+  (cons
+   (dotted_pair
+    (symbol) (dot) (symbol))
+   (cons (dotted_pair
+          (symbol) (dot) (symbol)))))
+ (list
+  (cons
+   (dotted_pair
+    (symbol) (dot) (symbol))
+   (cons (number (integer))))))

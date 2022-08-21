@@ -6,12 +6,14 @@ String text properties
 
 --------------------------------------------------------------------------------
 
-(source_file
-  (string_text_properties
-    (string
-     (string_fragment))
-    (integer)
-    (integer)
-    (list
-      (symbol)
-      (symbol))))
+(source
+ (text_properties
+  (string
+   (string_fragment))
+  (number
+   (integer))
+  (number
+   (integer))
+  (list
+   (cons (symbol)
+         (cons (symbol))))))

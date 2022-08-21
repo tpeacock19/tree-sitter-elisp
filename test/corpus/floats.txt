@@ -9,8 +9,8 @@ Float literals
 
 --------------------------------------------------------------------------------
 
-(source_file
-  (float)
-  (float)
-  (float)
-  (float))
+(source
+ (number (float (decimal)))
+ (number (float (decimal)))
+ (number (float (exponent)))
+ (number (float (exponent))))

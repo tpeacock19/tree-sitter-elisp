@@ -5,18 +5,15 @@ Quotes
 'foo
 #'bar
 '(x ,y ,@z)
-
 --------------------------------------------------------------------------------
 
-(source_file
-  (quote
-    (symbol))
-  (quote
-    (symbol))
-  (quote
-    (list
-      (symbol)
-      (unquote
-        (symbol))
-      (unquote_splice
-        (symbol)))))
+(source
+ (quote
+  (symbol))
+ (fn_quote
+  (symbol))
+ (quote
+  (list
+   (cons (symbol)
+         (cons (backquote_eval (symbol))
+               (cons (splice (symbol))))))))

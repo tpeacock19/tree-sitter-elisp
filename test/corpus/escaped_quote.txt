@@ -11,10 +11,10 @@ Escaped symbols
 
 --------------------------------------------------------------------------------
 
-(source_file
-  (symbol)
-  (symbol)
-  (symbol)
-  (symbol)
-  (symbol)
-  (symbol))
+(source
+ (symbol)
+ (symbol)
+ (symbol)
+ (symbol)
+ (symbol)
+ (symbol))

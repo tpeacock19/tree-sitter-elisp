@@ -6,7 +6,7 @@ foo"bar"
 
 --------------------------------------------------------------------------------
 
-(source_file
-  (symbol)
-    (string
-     (string_fragment)))
+(source
+ (symbol)
+ (string
+  (string_fragment)))

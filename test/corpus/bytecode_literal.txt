@@ -6,9 +6,13 @@ Bytecode literals
 
 --------------------------------------------------------------------------------
 
-(source_file
-  (bytecode
-    (integer)
-    (integer)
-    (integer)
-    (integer)))
+(source
+ (bytecode
+  (number
+   (integer))
+  (number
+   (integer))
+  (number
+   (integer))
+  (number
+   (integer))))

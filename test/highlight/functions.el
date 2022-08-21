@@ -1,7 +1,13 @@
-(defun foo (x)
+(defun foo (x &optional y)
   ;; ^ keyword
-  ;;   ^ function
+  ;;    ^ function
   ;;        ^ variable.parameter
-  "stuff"
-  ;; ^ doc
-  x)
+  ;;          ^ type
+  ;;                    ^ variable.parameter
+  "`type' docstring `code'"
+  ;;       ^ doc
+  ;;  ^ type
+  ;;                  ^ type
+  (interactive "P")
+  ;; ^ keyword
+  (foo bar 10))

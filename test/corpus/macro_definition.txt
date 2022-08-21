@@ -8,13 +8,14 @@ Macro definition
 
 --------------------------------------------------------------------------------
 
-(source_file
-  (macro_definition
-    (symbol)
-    (list
-      (symbol)
-      (symbol)
-      (symbol))
-    (string
-     (string_fragment))
-    (symbol)))
+(source
+ (macro_definition
+  (symbol)
+  (symbol)
+  (list
+   (cons (symbol)
+         (cons (symbol)
+               (cons (symbol)))))
+  (string
+   (string_fragment))
+  (symbol)))

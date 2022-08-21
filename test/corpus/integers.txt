@@ -12,13 +12,10 @@ Integer literals
 
 --------------------------------------------------------------------------------
 
-(source_file
-  (integer)
-  (integer)
-  (integer)
-  (integer)
-  (integer)
-  (integer)
-  (integer)
-  (integer)
-  (integer))
+(source
+ (number (integer))
+ (number (integer))
+ (number (integer))
+ (number (integer))
+ (number (integer))
+ (number (integer)))

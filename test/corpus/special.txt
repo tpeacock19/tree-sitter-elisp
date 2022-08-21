@@ -7,11 +7,13 @@ Special forms
 
 --------------------------------------------------------------------------------
 
-(source_file
-  (special_form
-    (symbol)
-    (integer)
-    (integer))
-  (special_form
-    (symbol)
-    (symbol)))
+(source
+ (special_form
+  (symbol)
+  (number
+   (integer))
+  (number
+   (integer)))
+ (special_form
+  (symbol)
+  (symbol)))

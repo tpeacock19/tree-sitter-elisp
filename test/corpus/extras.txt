@@ -1,15 +1,20 @@
 ================================================================================
 Whitespace and comments
 ================================================================================
-
 foo
-; comment
+                                        ; comment
+;; comment
 
 bar
+;;;###autoload test other stuff
 
 --------------------------------------------------------------------------------
 
-(source_file
-  (symbol)
-  (comment)
-  (symbol))
+(source
+ (symbol)
+ (comment)
+ (comment)
+ (symbol)
+ (comment
+  (autoload
+   (keyword))))
