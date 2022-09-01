@@ -15,5 +15,7 @@ String text properties
   (number
    (integer))
   (list
-   (cons (symbol)
-         (cons (symbol))))))
+   (paren_open)
+   (symbol)
+   (symbol)
+   (paren_close))))

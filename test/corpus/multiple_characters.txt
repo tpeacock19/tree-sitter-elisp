@@ -13,4 +13,7 @@ Multiple characters without spaces (regression test)
  (char)
  (char)
  (char)
- (list (cons (char))))
+ (list
+  (paren_open)
+  (char)
+  (paren_close)))

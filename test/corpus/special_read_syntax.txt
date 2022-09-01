@@ -36,7 +36,10 @@ Special read syntax
  (special_syntax
   (circular_object
    (name)
-   (list (cons (symbol)))))
+   (list
+    (paren_open)
+    (symbol)
+    (paren_close))))
  (special_syntax
   (circular_ref))
  (bytecode
@@ -73,6 +76,11 @@ Special read syntax
          (symbol)
          (symbol))
  (list
-  (cons (special_syntax
-         (circular_object (name) (list (cons (symbol)))))
-        (cons (symbol) (cons (special_syntax (circular_ref)))))))
+  (paren_open)
+  (special_syntax
+   (circular_object (name) (list
+                            (paren_open)
+                            (symbol)
+                            (paren_close))))
+  (symbol) (special_syntax (circular_ref))
+  (paren_close)))

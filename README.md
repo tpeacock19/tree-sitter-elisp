@@ -2,21 +2,15 @@
 
 A simple tree-sitter grammar for elisp.
 
-Syntax supported:
+All Elisp Syntax is supported:
 
 * Atoms (integers, floats, strings, characters, symbols)
 * Lists (normal syntax `(a b)` and dotted `(a . b)`)
 * Vectors
 * Quoting and unquoting (`'`, `#'`, `` ` ``, `,`, `,@`)
-* Some special read syntax (`$#`, `##`, `#("foo" 1 2 x)`)
+* Special read syntax
 * Bytecode literals (`#[1 2 3 4]`)
-* Special forms (`let` etc)
 * Comments
-
-Currently unsupported:
-
-* Autoload cookies
-* Definitions (e.g. `defun`, `defvar`, `defmacro`)
 
 ## Limitations
 
@@ -49,7 +43,7 @@ $ npm run parse ~/.emacs.d/init.el
 ```
 
 The grammar itself is in
-[grammar.js](https://github.com/Wilfred/tree-sitter-elisp/blob/main/grammar.js). You'll
+[grammar.js](https://github.com/tpeacock19/tree-sitter-elisp/blob/main/grammar.js). You'll
 need to regenerate the code after editing the grammar.
 
 ```
@@ -66,7 +60,7 @@ You can also run this parser against your `.emacs.d` to confirm it can
 parse everything.
 
 ```
-$ npm run parse -- '/home/wilfred/.emacs.d/**/*.el' --quiet --stat
+$ npm run parse -- '/home/tpeacock/.emacs.d/**/*.el' --quiet --stat
 ```
 
 ## Why?

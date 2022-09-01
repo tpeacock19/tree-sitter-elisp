@@ -10,12 +10,16 @@ Macro definition
 
 (source
  (macro_definition
+  (paren_open)
   (symbol)
   (symbol)
   (list
-   (cons (symbol)
-         (cons (symbol)
-               (cons (symbol)))))
+   (paren_open)
+   (symbol)
+   (symbol (param_keyword))
+   (symbol)
+   (paren_close))
   (string
    (string_fragment))
-  (symbol)))
+  (symbol)
+  (paren_close)))

@@ -19,41 +19,62 @@ Function definition
 
 (source
  (function_definition
-  (defun_header (symbol)
-    (symbol)
-    (list
-     (cons (symbol)
-           (cons (symbol)
-                 (cons (symbol))))))
+  (paren_open)
+  (symbol)
+  (symbol)
+  (list
+   (paren_open)
+   (symbol)
+   (symbol (param_keyword))
+   (symbol)
+   (paren_close))
   (string
    (string_fragment))
-  (symbol))
+  (symbol)
+  (paren_close))
  (function_definition
-  (defun_header
-    (symbol)
-    (symbol)
-    (list))
-  (symbol (boolean)))
+  (paren_open)
+  (symbol)
+  (symbol)
+  (list
+   (paren_open)
+   (paren_close))
+  (symbol (boolean))
+  (paren_close))
  (function_definition
-  (defun_header (symbol)
-    (symbol)
-    (list))
+  (paren_open)
+  (symbol)
+  (symbol)
+  (list
+   (paren_open)
+   (paren_close))
   (number
-   (integer)))
+   (integer))
+  (paren_close))
  (backquote
   (list
-   (cons (symbol)
-         (cons (backquote_eval (symbol))
-               (cons (list)
-                     (cons (splice (symbol))))))))
+   (paren_open)
+   (symbol)
+   (backquote_eval (symbol))
+   (list
+    (paren_open)
+    (paren_close))
+   (splice (symbol))
+   (paren_close)))
  (quote
   (list
-   (cons (symbol)
-         (cons (number (integer))))))
+   (paren_open)
+   (symbol)
+   (number (integer))
+   (paren_close)))
  (quote
   (list
-   (cons (symbol))))
+   (paren_open)
+   (symbol)
+   (paren_close)))
  (quote
   (list
-   (cons (symbol)
-         (cons (symbol))))))
+   (paren_open)
+   (symbol)
+   (symbol)
+   (paren_close))))

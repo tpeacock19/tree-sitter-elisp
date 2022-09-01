@@ -23,41 +23,41 @@
 ;; @keyword
 
 ;; ;; Function definitions
+;; (special_form (symbol)) @keyword
 
-(variable_definer special_form: (symbol) @keyword)
-(variable_definer name: (symbol) @variable.parameter)
-(variable_definer docstring: (string (lisp_code) @type))
-(variable_definer docstring: (string (string_fragment) @doc))
+(variable_definition special_form: (symbol) @keyword)
+(variable_definition name: (symbol) @variable.parameter)
+(variable_definition docstring: (string (lisp_code) @type))
+(variable_definition docstring: (string (string_fragment) @doc))
 
-(constant_definer special_form: (symbol) @keyword)
-(constant_definer name: (symbol) @variable.parameter)
-(constant_definer docstring: (string (lisp_code) @type))
-(constant_definer docstring: (string (string_fragment) @doc))
+(constant_definition special_form: (symbol) @keyword)
+(constant_definition name: (symbol) @variable.parameter)
+(constant_definition docstring: (string (lisp_code) @type))
+(constant_definition docstring: (string (string_fragment) @doc))
 
-(custom_definer macro: (symbol) @keyword)
-(custom_definer name: (symbol) @variable.parameter)
-(custom_definer docstring: (string (lisp_code) @type))
-(custom_definer docstring: (string (string_fragment) @doc))
+(custom_definition macro: (symbol) @keyword)
+(custom_definition name: (symbol) @variable.parameter)
+(custom_definition docstring: (string (lisp_code) @type))
+(custom_definition docstring: (string (string_fragment) @doc))
 
 (variable_setter special_form: (symbol) @keyword)
 (variable_setter symbol: (symbol) @variable.parameter)
 
-(function_definition (defun_header macro: _* @keyword))
-(function_definition (defun_header function_name: (symbol) @function))
+(function_definition macro: _* @keyword)
+(function_definition function_name: (symbol) @function)
+;; (function_definition
+;;  parameters: (list (_) @type (.match? @type "^&")))
 (function_definition
- (defun_header parameters: (list (_) @type (.match? @type "^&"))))
-(function_definition
- (defun_header parameters: (list (_) @variable.parameter)))
+ parameters: (list (symbol) @variable.parameter))
 (function_definition docstring: (string (lisp_code) @type))
 (function_definition docstring: (string (string_fragment) @doc))
 (function_definition interactive: (interactive (special_form) @keyword))
 (function_definition interactive: (interactive (string) @string))
 
-
 (macro_definition macro: (symbol) @keyword)
 (macro_definition name: (symbol) @function)
-(macro_definition parameters: (list (_) @type (.match? @type "^&")))
-(macro_definition parameters: (list (_) @variable.parameter))
+;; (macro_definition parameters: (list (_) @type (.match? @type "^&")))
+(macro_definition parameters: (list (symbol) @variable.parameter))
 (macro_definition docstring: (string (lisp_code) @type))
 (macro_definition docstring: (string (string_fragment) @doc))
 
@@ -94,22 +94,26 @@
 
 ;; ((comment) @escape (.match? @escape "###autoload"))
 
-(quote (symbol)) @constant
+;; (quote (symbol) @constant)
 
-(autoload (autokey) @error)
-(autoload) @comment
+(comment (autoload (keyword) @error))
+(comment (autoload (function) @function))
 
+;; (symbol (macro) @keyword)
+(dotted_pair (dot) @constant.builtin)
 (comment (lisp_code) @type)
 (comment) @comment
-(number (integer)) @number
+(number (integer) @number)
+(number (float) @number)
 (string) @string
 (lisp_code) @type
-(number (float)) @number
-(char) @number
+(char) @constant
 (symbol (boolean) @constant.builtin)
-((symbol) @type (.match? @type "^&"))
-(keyword) @variable.builtin
+(symbol (keyword) @variable.builtin)
+(symbol (param_keyword) @type)
 
+(paren_open) @punctuation.bracket
+(paren_close) @punctuation.bracket
 (special_syntax (uninterned_symbol (symbol_name) @constant.builtin))
 
 ;; ["(" ")" "#[" "[" "]"] @punctuation.bracket

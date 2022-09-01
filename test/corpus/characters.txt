@@ -91,4 +91,7 @@ Characters
  (char)
  (char)
  (char)
- (list (cons (char))))
+ (list
+  (paren_open)
+  (char)
+  (paren_close)))

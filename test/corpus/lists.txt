@@ -15,33 +15,51 @@ Lists
 --------------------------------------------------------------------------------
 
 (source
- (list)
- (list)
  (list
-  (cons (symbol)
-        (cons (list
-               (cons (symbol))))))
+  (paren_open)
+  (paren_close))
  (list
-  (cons (number (integer))
-        (dotted_pair (number (integer))
-                     (dot)
-                     (symbol (boolean)))))
+  (paren_open)
+  (paren_close))
  (list
-  (cons (symbol)
-        (cons (symbol (dot)))))
+  (paren_open)
+  (symbol)
+  (list
+   (paren_open)
+   (symbol)
+   (paren_close))
+  (paren_close))
+ (list
+  (paren_open)
+  (number (integer))
+  (dotted_pair (number (integer))
+               (dot)
+               (symbol (boolean)))
+  (paren_close))
+ (list
+  (paren_open)
+  (symbol)
+  (symbol (dot))
+  (paren_close))
  (quote
   (list
+   (paren_open)
    (comment)
-   (cons (symbol)
-         (cons (symbol)))))
+   (symbol)
+   (symbol)
+   (paren_close)))
  (list
-  (cons
-   (dotted_pair
-    (symbol) (dot) (symbol))
-   (cons (dotted_pair
-          (symbol) (dot) (symbol)))))
+  (paren_open)
+  (list (paren_open )
+        (symbol) (dot) (symbol) (paren_close ))
+  (list (paren_open )
+        (symbol) (dot) (symbol) (paren_close ))
+  (paren_close))
  (list
-  (cons
-   (dotted_pair
-    (symbol) (dot) (symbol))
-   (cons (number (integer))))))
+  (paren_open)
+  (list
+   (paren_open)
+   (symbol) (dot) (symbol)
+   (paren_close))
+  (number (integer))
+  (paren_close)))
