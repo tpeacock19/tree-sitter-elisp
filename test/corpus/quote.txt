@@ -14,8 +14,6 @@ Quotes
   (symbol))
  (quote
   (list
-   (paren_open)
    (symbol)
    (backquote_eval (symbol))
-   (splice (symbol))
-   (paren_close))))
+   (splice (symbol)))))

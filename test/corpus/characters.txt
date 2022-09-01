@@ -92,6 +92,6 @@ Characters
  (char)
  (char)
  (list
-  (paren_open)
+
   (char)
-  (paren_close)))
+  ))

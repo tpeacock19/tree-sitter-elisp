@@ -8,14 +8,11 @@ String text properties
 
 (source
  (text_properties
-  (string
-   (string_fragment))
+  (string (string_fragment))
   (number
    (integer))
   (number
    (integer))
   (list
-   (paren_open)
    (symbol)
-   (symbol)
-   (paren_close))))
+   (symbol))))

@@ -37,9 +37,7 @@ Special read syntax
   (circular_object
    (name)
    (list
-    (paren_open)
-    (symbol)
-    (paren_close))))
+    (symbol))))
  (special_syntax
   (circular_ref))
  (bytecode
@@ -69,18 +67,13 @@ Special read syntax
    (integer))
   (number
    (integer))
-  (string
-   (string_fragment)))
+  (string (string_fragment)))
  (no_read_syntax)
  (record (symbol)
          (symbol)
          (symbol))
  (list
-  (paren_open)
   (special_syntax
    (circular_object (name) (list
-                            (paren_open)
-                            (symbol)
-                            (paren_close))))
-  (symbol) (special_syntax (circular_ref))
-  (paren_close)))
+                            (symbol))))
+  (symbol) (special_syntax (circular_ref))))

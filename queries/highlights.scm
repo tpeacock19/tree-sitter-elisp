@@ -1,123 +1,53 @@
-;; [
-;;  "and"
-;;  "catch"
-;;  "cond"
-;;  "condition-case"
-;;  "function"
-;;  "if"
-;;  "lambda"
-;;  "let"
-;;  "let*"
-;;  "or"
-;;  "prog1"
-;;  "prog2"
-;;  "progn"
-;;  "quote"
-;;  "save-current-buffer"
-;;  "save-excursion"
-;;  "save-restriction"
-;;  "unwind-protect"
-;;  "while"
-;;  ]
-;; ;; Special forms
-;; @keyword
+;; order must go from most specific to generic
 
-;; ;; Function definitions
-;; (special_form (symbol)) @keyword
-
-(variable_definition special_form: (symbol) @keyword)
-(variable_definition name: (symbol) @variable.parameter)
-(variable_definition docstring: (string (lisp_code) @type))
-(variable_definition docstring: (string (string_fragment) @doc))
-
-(constant_definition special_form: (symbol) @keyword)
-(constant_definition name: (symbol) @variable.parameter)
-(constant_definition docstring: (string (lisp_code) @type))
-(constant_definition docstring: (string (string_fragment) @doc))
-
-(custom_definition macro: (symbol) @keyword)
-(custom_definition name: (symbol) @variable.parameter)
-(custom_definition docstring: (string (lisp_code) @type))
-(custom_definition docstring: (string (string_fragment) @doc))
-
-(variable_setter special_form: (symbol) @keyword)
-(variable_setter symbol: (symbol) @variable.parameter)
-
-(function_definition macro: _* @keyword)
-(function_definition function_name: (symbol) @function)
-;; (function_definition
-;;  parameters: (list (_) @type (.match? @type "^&")))
-(function_definition
- parameters: (list (symbol) @variable.parameter))
-(function_definition docstring: (string (lisp_code) @type))
-(function_definition docstring: (string (string_fragment) @doc))
-(function_definition interactive: (interactive (special_form) @keyword))
-(function_definition interactive: (interactive (string) @string))
-
-(macro_definition macro: (symbol) @keyword)
+;; defined forms
 (macro_definition name: (symbol) @function)
-;; (macro_definition parameters: (list (_) @type (.match? @type "^&")))
-(macro_definition parameters: (list (symbol) @variable.parameter))
-(macro_definition docstring: (string (lisp_code) @type))
-(macro_definition docstring: (string (string_fragment) @doc))
+(function_definition name: (symbol) @function)
+(variable_setter name: (symbol) @variable.parameter)
+(custom_definition name: (symbol) @variable.parameter)
+(constant_definition name: (symbol) @variable.parameter)
+(variable_definition name: (symbol) @variable.parameter)
 
-;; ((symbol) @variable.builtin
-;;  (.match? @variable.builtin "^:option")
-;;  ((symbol) @variable . _ (comment)*)*)
+parameters: (list (symbol) @variable.parameter)
+parameters: (list (symbol (param_keyword) @type))
+lambda_list: (list (symbol) @variable.parameter)
+lambda_list: (list (symbol (param_keyword) @type))
+interactive: (interactive (special_form) @keyword)
+interactive: (interactive (string) @string)
+macro: (symbol) @keyword
+special_form: (symbol) @keyword
+marker: _ @operator
+;; strings
+docstring: (string
+            open: _ @doc
+            (string_fragment)* @doc
+            (lisp_code)* @type
+            close: _ @doc)
 
-;; ((symbol) @keyword
-;;  (.match? @keyword "define-minor-mode")
-;;  . (symbol) @variable
-;;  . (string)? @doc)
-
-;; ((symbol) @keyword
-;;  (.match? @keyword "^(def(var|custom|group)(-local)?)$")
-;;  . (symbol) @variable
-;;  . [ (symbol) (string) (list) (number (integer))]
-;;  . (string)? @doc)
-
-;; ((symbol) @keyword
-;;  (.match? @keyword "^(cl-def(un|subst))$")
-;;  . (symbol) @function
-;;  . [ (symbol) (string) (list) (number (integer))]
-;;  . (string)? @doc)
-
-;; ((symbol) @keyword
-;;  (.match? @keyword "^(cl-def(macro|struct))$")
-;;  . (symbol) @function
-;;  . [ (symbol) (string) (list) (number (integer))]
-;;  . (string)? @doc)
-
-;; (["defvar" "defconst"] @keyword
-;;  . (symbol) @variable
-;;  (string)? @doc)
-
-;; ((comment) @escape (.match? @escape "###autoload"))
-
-;; (quote (symbol) @constant)
-
-(comment (autoload (keyword) @error))
-(comment (autoload (function) @function))
-
-;; (symbol (macro) @keyword)
-(dotted_pair (dot) @constant.builtin)
-(comment (lisp_code) @type)
-(comment) @comment
-(number (integer) @number)
-(number (float) @number)
-(string) @string
-(lisp_code) @type
-(char) @constant
+(string
+ open: _ @string
+ (string_fragment)* @string
+ (lisp_code)* @type
+ close: _ @string)
+;; comments
+(comment
+ (lisp_code)* @type
+ (autoload (keyword)* @error (function)* @function))
+;; symbols
+(special_syntax (uninterned_symbol (symbol_name) @constant.builtin))
 (symbol (boolean) @constant.builtin)
 (symbol (keyword) @variable.builtin)
 (symbol (param_keyword) @type)
+(list (dot) @constant.builtin)
+(fn_quote value: (symbol) @function)
+(quote (symbol) @constant)
+;; misc
+(number) @number
+(char) @constant
+(lisp_code) @type
+(comment) @comment
 
-(paren_open) @punctuation.bracket
-(paren_close) @punctuation.bracket
-(special_syntax (uninterned_symbol (symbol_name) @constant.builtin))
 
-;; ["(" ")" "#[" "[" "]"] @punctuation.bracket
-;; ["`" "#'" "'" "," ",@"] @operator
 
 
 ;; macros from std directory lisp/emacs-lisp
@@ -159,7 +89,6 @@
 
 ;; ;; (quote (list (symbol) @embedded))
 
-;; (fn_quoting_lit _* (symbol) @function)
 
 ;; ;; (quote "#'" (_)* (list (symbol) @function))
 

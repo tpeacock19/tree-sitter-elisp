@@ -185,15 +185,16 @@ module.exports = grammar({
   conflicts: ($) => [
     // [$.autoload],
     // [$.circular_object],
-    [$.defun_header, $.symbol],
+    // [$._defun_header, $.symbol],
     [$.variable_setter, $.symbol],
     [$.macro_definition, $.symbol],
     [$.custom_definition, $.symbol],
+    [$.function_definition, $.symbol],
     [$.variable_definition, $.symbol],
     [$.constant_definition, $.symbol],
   ],
 
-  // word: ($) => $.identifier,
+  word: ($) => $.identifier,
 
   rules: {
     source: ($) => repeat(choice($._gap, $._form)),
@@ -201,6 +202,10 @@ module.exports = grammar({
     _ws: (_) => WHITESPACE,
     identifier: ($) => /[a-zA-Z_\\-]+/,
 
+    _paren_open: ($) => token.immediate("("),
+    _paren_close: ($) => token.immediate(")"),
+    _brk_open: ($) => token.immediate("["),
+    _brk_close: ($) => token.immediate("]"),
     _form: ($) =>
       prec.right(
         choice(
@@ -212,7 +217,7 @@ module.exports = grammar({
           $.constant_definition,
           $.function_definition,
           $.number,
-          $.special_form,
+          // $.special_form,
           $.special_syntax,
           $.string,
           $.char,
@@ -226,7 +231,8 @@ module.exports = grammar({
           $.text_properties,
           $.interactive,
           $.list,
-          $._dotted_pair_list,
+          // $.keyword,
+          alias($.dotted_pair_list, $.list),
           // some other reader macros
           $.fn_quote,
           $.quote,
@@ -282,15 +288,21 @@ module.exports = grammar({
     // Look for dot with space afterward for dotted notation
     dot: ($) => token(". "),
 
+    keyword: ($) => token(seq(":", SYMBOL)),
+    param_keyword: ($) => token(seq("&", choice("optional", "rest"))),
+    error: ($) => token("error"),
+
     symbol: ($) =>
       prec(
         PREC.NORMAL,
         choice(
           prec(10, $.boolean),
+          // alias(token(seq(":", SYMBOL)), $.keyword),
+          $.keyword,
+          $.param_keyword,
           token(SYMBOL),
           // allow for dot to be symbol
           // TODO: only allow at end of list
-          // $.macro,
           alias(token("."), $.dot),
           choice("defun", "defsubst", "cl-defun", "cl-defsubst"),
           choice("setq", "setq-local", "setq-default"),
@@ -299,7 +311,6 @@ module.exports = grammar({
         )
       ),
 
-    keyword: ($) => seq(":", $.identifier),
     quote: ($) => seq(field("marker", "'"), field("value", $._form)),
     fn_quote: ($) =>
       seq(field("marker", "#'"), field("value", $._form)),
@@ -309,25 +320,24 @@ module.exports = grammar({
     backquote: ($) =>
       seq(field("marker", "`"), field("value", $._form)),
 
-    _dotted_pair_list: ($) =>
-      seq(field("open", "("), $.dotted_pair, field("close", ")")),
-    dotted_pair: ($) =>
+    dotted_pair_list: ($) =>
+      seq($._paren_open, $._dotted_pair, $._paren_close),
+    // prec.right(seq(token("("), $.dotted_pair, token(")"))),
+    _dotted_pair: ($) =>
       seq(field("car", $._form), $.dot, field("cdr", $._form)),
 
     list: ($) =>
-      seq(
-        field("open", "("),
-        repeat(choice($.cons)),
-        field("close", ")")
-      ),
-    cons: ($) =>
+      seq($._paren_open, repeat(choice($._cons)), $._paren_close),
+    _cons: ($) =>
       prec.right(
         1,
         seq(
-          field("car", $._form),
+          choice($._form),
           // dotted pair without quotations can be the cdr of a cons cell
           // TODO: Only allow in the final cons cell of list
-          optional(field("cdr", choice($.cons, $.dotted_pair)))
+          optional(
+            choice($._cons, alias($._dotted_pair, $.dotted_pair))
+          )
         )
       ),
 
@@ -335,23 +345,19 @@ module.exports = grammar({
       prec(
         2,
         seq(
-          '"',
+          field("open", '"'),
           repeat(
             choice(
               $.lisp_code,
               alias(
-                $.unescaped_double_string_fragment,
-                $.string_fragment
-              ),
-              alias(
-                $.unescaped_double_string_fragment_grv,
+                $._unescaped_double_string_fragment,
                 $.string_fragment
               ),
               $.null,
               $.escape_sequence
             )
           ),
-          token.immediate('"')
+          field("close", token.immediate('"'))
         )
       ),
 
@@ -368,11 +374,13 @@ module.exports = grammar({
       ),
 
     null: ($) => NULL,
-    unescaped_double_string_fragment: ($) =>
-      token.immediate(prec(2, /([^`"\\])+/)),
-
-    unescaped_double_string_fragment_grv: ($) =>
-      token.immediate(prec(1, seq("`", optional(/([^'"\\])+/)))),
+    _unescaped_double_string_fragment: ($) =>
+      token.immediate(
+        choice(
+          prec(2, /([^`"\\])+/),
+          prec(1, seq("`", optional(/([^'"\\])+/)))
+        )
+      ),
 
     unicode_name_esc: ($) => token(UNICODE_NAME_ESC),
     unicode_point_esc: ($) =>
@@ -399,16 +407,16 @@ module.exports = grammar({
 
     vector: ($) =>
       seq(
-        field("open", "["),
+        $._brk_open,
         repeat(choice(field("value", $._form), $._gap)),
-        field("close", "]")
+        $._brk_close
       ),
 
     char_table: ($) =>
       seq(
         field("open", choice("#^[", "#^^[")),
         repeat(choice($._form, $._gap)),
-        field("close", "]")
+        "]"
       ),
 
     bool_vector: ($) =>
@@ -453,26 +461,24 @@ module.exports = grammar({
       ),
     interactive: ($) =>
       seq(
-        "(",
+        $._paren_open,
         alias("interactive", $.special_form),
         optional($._form),
         optional(choice($.list, repeat1(prec(1, $.symbol)))),
-        ")"
+        $._paren_close
       ),
 
     special_form: ($) =>
       prec.left(
         PREC.KWD_LIT,
         seq(
-          field("open", "("),
+          $._paren_open,
           choice(
             "and",
             "catch",
             "cond",
             "condition-case",
             "function",
-            "if",
-            "lambda",
             "let",
             "let*",
             "or",
@@ -487,7 +493,7 @@ module.exports = grammar({
             "while"
           ),
           repeat($._form),
-          field("close", ")")
+          $._paren_close
         )
       ),
 
@@ -495,32 +501,32 @@ module.exports = grammar({
       prec.right(
         PREC.NORMAL,
         seq(
-          field("open", "("),
+          $._paren_open,
           field("special_form", alias("defvar", $.symbol)),
           field("name", $.symbol),
           optional(field("initvalue", $._form)),
           optional(field("docstring", $.string)),
-          field("close", ")")
+          $._paren_close
         )
       ),
     constant_definition: ($) =>
       prec.right(
         PREC.NORMAL,
         seq(
-          field("open", "("),
+          $._paren_open,
           field("special_form", alias("defconst", $.symbol)),
           optional(repeat(field("comment", $.comment))),
           field("name", $.symbol),
           field("initvalue", $._form),
           optional(field("docstring", $.string)),
-          field("close", ")")
+          $._paren_close
         )
       ),
     custom_definition: ($) =>
       prec.right(
         PREC.NORMAL,
         seq(
-          field("open", "("),
+          $._paren_open,
           field("macro", alias("defcustom", $.symbol)),
           field("name", $.symbol),
           field("standard", $._form),
@@ -547,28 +553,9 @@ module.exports = grammar({
               )
             )
           ),
-          field("close", ")")
+          $._paren_close
         )
       ),
-    // _custom_types: (_) =>
-    //   choice(
-    //     ":initialize",
-    //     ":set",
-    //     ":get",
-    //     ":type",
-    //     ":options",
-    //     ":require",
-    //     ":set-after",
-    //     ":risky",
-    //     ":safe",
-    //     ":local",
-    //     ":group",
-    //     ":link",
-    //     ":package-version",
-    //     ":version",
-    //     ":tag",
-    //     ":load"
-    //   ),
     _custom_type_form: ($) => choice(":initialize", ":set", ":get"),
     _custom_type_quote: ($) =>
       choice(
@@ -588,7 +575,7 @@ module.exports = grammar({
       prec.right(
         PREC.NORMAL,
         seq(
-          field("open", "("),
+          $._paren_open,
           field(
             "special_form",
             alias(
@@ -596,50 +583,49 @@ module.exports = grammar({
               $.symbol
             )
           ),
-          repeat1(
-            seq(field("symbol", $._form), field("value", $._form))
-          ),
-          field("close", ")")
+          repeat1(seq(field("name", $._form), field("value", $._form))),
+          $._paren_close
         )
       ),
-    defun_header: ($) =>
-      prec.right(
-        PREC.NORMAL,
-        choice(
-          seq(
-            field(
-              "macro",
-              alias(
-                choice("defun", "defsubst", "cl-defun", "cl-defsubst"),
-                $.symbol
-              )
-            ),
-            field("function_name", $.symbol),
-            field("parameters", $.list)
-          ),
-          seq(
-            field("macro", alias("lambda", $.symbol)),
-            field("lambda_list", $.list)
-          )
-        )
-      ),
+    // _defun_header: ($) => prec.right(PREC.NORMAL),
     function_definition: ($) =>
       prec.right(
         PREC.NORMAL,
         seq(
-          field("open", "("),
-          $.defun_header,
+          $._paren_open,
+          choice(
+            seq(
+              field(
+                "macro",
+                alias(
+                  choice(
+                    "defun",
+                    "defsubst",
+                    "cl-defun",
+                    "cl-defsubst"
+                  ),
+                  $.symbol
+                )
+              ),
+              field("name", $.symbol),
+              field("parameters", $.list)
+            ),
+            seq(
+              field("macro", alias("lambda", $.symbol)),
+              field("lambda_list", $.list)
+            )
+          ),
           optional(field("docstring", $.string)),
           optional(field("interactive", $.interactive)),
           repeat($._form),
-          field("close", ")")
+          $._paren_close
         )
       ),
     macro_definition: ($) =>
       prec.right(
         PREC.NORMAL,
         seq(
-          field("open", "("),
+          $._paren_open,
           field(
             "macro",
             alias(choice("defmacro", "cl-defmacro"), $.symbol)
@@ -650,11 +636,16 @@ module.exports = grammar({
           optional(
             field(
               "declaration",
-              seq("(", "declare", repeat1($._form), ")")
+              seq(
+                $._paren_open,
+                "declare",
+                repeat1($._form),
+                $._paren_close
+              )
             )
           ),
-          repeat($._form),
-          field("close", ")")
+          field("body", repeat($._form)),
+          $._paren_close
         )
       ),
 
@@ -675,440 +666,12 @@ module.exports = grammar({
 
     circular_ref: ($) => CIRCULAR_REF,
     unreadable_form: ($) => UNREADABLE_FORM,
-    no_read_syntax: ($) =>
-      seq(field("open", "#<"), /[^>]*/, field("close", ">")),
+    no_read_syntax: ($) => seq("#<", /[^>]*/, ">"),
 
     bytecode: ($) =>
       prec(PREC.SPECIAL, seq("#[", repeat($._form), "]")),
 
     record: ($) => prec(PREC.SPECIAL, seq("#s(", repeat($._form), ")")),
     hash_table: ($) => seq("#s(hash-table", repeat($._form), ")"),
-
-    macro: ($) => choice($._macros_lisp, $._macros_lisp_emacslisp),
-    _macros_lisp: ($) =>
-      choice(
-        "save-mark-and-excursion",
-        "define-alternatives",
-        "custom-put-if-not",
-        "with-help-window",
-        "strokes-define-stroke",
-        "strokes-define-stroke",
-        "hfy-save-buffer-state",
-        "define-widget-keywords",
-        "image-dired--with-db-file",
-        "image-dired--with-marked",
-        "image-dired--with-thumbnail-buffer",
-        "image-dired--on-file-in-dired-buffer",
-        "image-dired--do-mark-command",
-        "speedbar-with-writable",
-        "widget-specify-insert",
-        "dired-mark-if",
-        "dired-map-over-marks",
-        "define-thing-chars",
-        "define-skeleton",
-        "transient--with-emergency-exit",
-        "transient-define-prefix",
-        "transient-define-suffix",
-        "transient-define-infix",
-        "server-with-environment",
-        "rtree-make-node",
-        "rtree-set-left",
-        "rtree-set-right",
-        "rtree-set-range",
-        "rtree-low",
-        "rtree-high",
-        "rtree-set-low",
-        "rtree-set-high",
-        "rtree-left",
-        "rtree-right",
-        "rtree-range",
-        "repos-debug-macro",
-        "declare-function",
-        "noreturn",
-        "1value",
-        "def-edebug-spec",
-        "setq-local",
-        "defvar-local",
-        "push",
-        "pop",
-        "when",
-        "unless",
-        "dolist",
-        "dotimes",
-        "declare",
-        "ignore-errors",
-        "ignore-error",
-        "letrec",
-        "dlet",
-        "with-wrapper-hook",
-        "subr--with-wrapper-hook-no-warnings",
-        "delay-mode-hooks",
-        "atomic-change-group",
-        "with-undo-amalgamate",
-        "track-mouse",
-        "with-current-buffer",
-        "with-selected-window",
-        "with-selected-frame",
-        "save-window-excursion",
-        "with-output-to-temp-buffer",
-        "with-temp-file",
-        "with-temp-message",
-        "with-temp-buffer",
-        "with-silent-modifications",
-        "with-output-to-string",
-        "with-local-quit",
-        "while-no-input",
-        "condition-case-unless-debug",
-        "with-demoted-errors",
-        "combine-after-change-calls",
-        "combine-change-calls",
-        "with-case-table",
-        "with-file-modes",
-        "with-existing-directory",
-        "save-match-data",
-        "with-eval-after-load",
-        "with-syntax-table",
-        "dotimes-with-progress-reporter",
-        "dolist-with-progress-reporter",
-        "with-mutex",
-        "defvar-keymap",
-        "with-delayed-message",
-        "recentf-dialog",
-        "with-cpu-profiling",
-        "with-memory-profiling",
-        "pcomplete-here",
-        "pcomplete-here*",
-        "replace--push-stack",
-        "proced-with-processes-buffer",
-        "save-selected-window",
-        "with-temp-buffer-window",
-        "with-current-buffer-window",
-        "with-displayed-buffer-window",
-        "with-window-non-dedicated",
-        "comment-with-narrowing",
-        "json--with-output-to-string",
-        "json--with-indentation",
-        "json-readtable-dispatch",
-        "with-auto-compression-mode",
-        "jsonrpc-lambda",
-        "menu-bar-make-mm-toggle",
-        "menu-bar-make-toggle",
-        "menu-bar-make-toggle-command",
-        "imenu-progress-message",
-        "with-buffer-prepared-for-jit-lock",
-        "info-xref-with-file",
-        "info-xref-with-output",
-        "lazy-completion-table",
-        "with-minibuffer-selected-window",
-        "ibuffer-aif",
-        "ibuffer-awhen",
-        "ibuffer-save-marks",
-        "define-ibuffer-column",
-        "define-ibuffer-sorter",
-        "define-ibuffer-op",
-        "define-ibuffer-filter",
-        "defimage",
-        "make-help-screen",
-        "Info-no-error",
-        "with-isearch-suspended",
-        "isearch-define-mode-toggle",
-        "with-connection-local-variables",
-        "defezimage",
-        "save-buffer-state",
-        "with-environment-variables",
-        "electric-pair--with-uncached-syntax",
-        "electric-pair--save-literal-point-excursion",
-        "dframe-with-attached-buffer",
-        "face-attribute-specified-or",
-        "dabbrev-filter-elements",
-        "custom-put-if-not",
-        "defcustom",
-        "defface",
-        "defgroup",
-        "deftheme",
-        "completion-string",
-        "completion-num-uses",
-        "completion-last-use-time",
-        "completion-source",
-        "set-completion-string",
-        "set-completion-num-uses",
-        "set-completion-last-use-time",
-        "cmpl-prefix-entry-symbol",
-        "set-cmpl-prefix-entry-head",
-        "set-cmpl-prefix-entry-tail",
-        "with-buffer-modified-unmodified",
-        "bookmark-maybe-historicize-string",
-        "bound-and-true-p",
-        "auth-source--aput",
-        "pcmpl-gnu-with-file-buffer",
-        "align--set-marker",
-        "hex-char-to-num",
-        "num-to-hex-char",
-        "md4-make-step",
-        "dom-attr",
-        "minibuffer-with-setup-hook"
-      ),
-
-    _macros_lisp_emacslisp: ($) =>
-      choice(
-        "syntax-propertize-precompile-rules",
-        "syntax-propertize-rules",
-        "internal--thread-argument",
-        "thread-first",
-        "thread-last",
-        "if-let*",
-        "when-let*",
-        "and-let*",
-        "if-let",
-        "when-let",
-        "named-let",
-        "with-memoization",
-        "package--with-work-buffer",
-        "package--with-response-buffer",
-        "package--unless-error",
-        "package--push",
-        "seq-doseq",
-        "seq",
-        "seq-let",
-        "seq-setq",
-        "radix-tree-leaf",
-        "with-timeout",
-        "rx",
-        "rx-let-eval",
-        "rx-let",
-        "rx-define",
-        "rx",
-        "pcase",
-        "pcase-exhaustive",
-        "pcase-lambda",
-        "pcase-let*",
-        "pcase-let",
-        "pcase-dolist",
-        "pcase-setq",
-        "pcase--flip",
-        "guard",
-        "map",
-        "map-let",
-        "map--dispatch",
-        "map-put",
-        "reb-target-binding",
-        "add-function",
-        "remove-function",
-        "define-advice",
-        "let-alist",
-        "lm-with-file",
-        "gv-letplace",
-        "gv-define-expander",
-        "gv-define-expand",
-        "gv-define-setter",
-        "gv-define-simple-setter",
-        "setf",
-        "gv-pushnew!",
-        "gv-inc!",
-        "gv-dec!",
-        "gv-synthetic-place",
-        "gv-delay-error",
-        "gv-ref",
-        "gv-letref",
-        "macroexp--accumulate",
-        "macroexp-let2",
-        "macroexp-let2*",
-        "degrees-to-radians",
-        "radians-to-degrees",
-        "cps--gensym",
-        "cps--define-unsupported",
-        "cps--with-value-wrapper",
-        "cps--with-dynamic-binding",
-        "iter-yield-from",
-        "iter-defun",
-        "iter-lambda",
-        "iter-make",
-        "iter-do",
-        "cps--advance-for",
-        "cps--initialize-for",
-        "ewoc--set-buffer-bind-dll-let*",
-        "ewoc--set-buffer-bind-dll",
-        "ert-with-test-buffer",
-        "ert-simulate-keys",
-        "ert-with-buffer-renamed",
-        "ert-with-message-capture",
-        "ert-resource-directory",
-        "ert-resource-file",
-        "ert-with-temp-file",
-        "ert-with-temp-directory",
-        "defclass",
-        "oref",
-        "oref-default",
-        "with-slots",
-        "eieio",
-        "eieio-class-parent",
-        "oset",
-        "oset-default",
-        "faceup-defexplainer",
-        "let-when-compile",
-        "thunk-delay",
-        "thunk-let",
-        "thunk-let*",
-        "ert-deftest",
-        "should",
-        "should-not",
-        "should-error",
-        "ert--skip-unless",
-        "ert-info",
-        "eldoc--documentation-strategy-defcustom",
-        "eieio--class-option-assoc",
-        "eieio-declare-slots",
-        "defgeneric",
-        "defmethod",
-        "crm--completion-command",
-        "define-derived-mode",
-        "define-minor-mode",
-        "define-globalized-minor-mode",
-        "easy-mmode-defmap",
-        "easy-mmode-defsyntax",
-        "easy-mmode-define-navigation",
-        "debugger-env-macro",
-        "easy-menu-define",
-        "cl-incf",
-        "cl-decf",
-        "cl-pushnew",
-        "cl-declaim",
-        "with-comp-cstr-accessors",
-        "comp-cstr-set-range-for-arithm",
-        "proclaim-inline",
-        "proclaim-notinline",
-        "defsubst",
-        "define-obsolete-function-alias",
-        "define-obsolete-variable-alias",
-        "define-obsolete-face-alias",
-        "dont-compile",
-        "eval-when-compile",
-        "eval-and-compile",
-        "with-suppressed-warnings",
-        "byte-compiler-options",
-        "benchmark-elapse",
-        "benchmark-run",
-        "benchmark-run-compiled",
-        "benchmark-progn",
-        "backtrace--with-output-variables",
-        "cl-generic-define-generalizer",
-        "cl--generic",
-        "cl-defgeneric",
-        "cl-generic-current-method-specializers",
-        "cl-generic-define-context-rewriter",
-        "cl-defmethod",
-        "cl--generic-prefill-dispatchers",
-        "backquote-list*-macro",
-        "backquote",
-        "avl-tree--root",
-        "avl-tree--switch-dir",
-        "avl-tree--dir-to-sign",
-        "avl-tree--sign-to-dir",
-        "byte-compile-log-lap",
-        "byte-optimize--pcase",
-        "myaccessor",
-        "cl-defsubst",
-        "inline-quote",
-        "inline-const-p",
-        "inline-const-val",
-        "inline-error",
-        "inline--leteval",
-        "inline--letlisteval",
-        "inline-letevals",
-        "inline-if",
-        "define-inline",
-        "cl--pop2",
-        "cl-defun",
-        "cl-iter-defun",
-        "cl-function",
-        "cl-destructuring-bind",
-        "cl-eval-when",
-        "cl-load-time-value",
-        "cl-case",
-        "cl-ecase",
-        "cl-typecase",
-        "cl-etypecase",
-        "cl-block",
-        "cl-return",
-        "cl-return-from",
-        "cl-loop",
-        "cl--push-clause-loop-body",
-        "cl-do",
-        "cl-do*",
-        "cl-dolist",
-        "cl-dotimes",
-        "cl-tagbody",
-        "cl-prog",
-        "cl-prog*",
-        "cl-do-symbols",
-        "cl-do-all-symbols",
-        "cl-psetq",
-        "cl-progv",
-        "cl-flet",
-        "cl-flet*",
-        "cl-labels",
-        "cl-macrolet",
-        "cl-symbol-macrolet",
-        "cl-multiple-value-bind",
-        "cl-multiple-value-setq",
-        "cl-locally",
-        "cl-the",
-        "cl-declare",
-        "cl-psetf",
-        "cl-remf",
-        "cl-shiftf",
-        "cl-rotatef",
-        "cl-letf",
-        "cl-letf*",
-        "cl-callf",
-        "cl-callf2",
-        "cl-defsubst",
-        "cl--find-class",
-        "cl-defstruct",
-        "cl-struct",
-        "cl-check-type",
-        "cl-assert",
-        "cl-define-compiler-macro",
-        "cl-deftype",
-        "cl-type",
-        "comp-loop-insn-in-block",
-        "comp-with-sp",
-        "comp-op-case",
-        "comp-apply-in-env",
-        "cl-defgeneric",
-        "byte-defop",
-        "byte-extrude-byte-code-vectors",
-        "byte-compile-push-bytecodes",
-        "byte-compile-push-bytecode-const2",
-        "byte-compile-log",
-        "byte-compile-close-variables",
-        "displaying-byte-compile-warnings",
-        "byte-compile-get-constant",
-        "byte-defop-compiler",
-        "byte-defop-compiler-1",
-        "byte-compile-goto-if",
-        "byte-compile-maybe-guarded",
-        "bindat--pcase",
-        "bindat-type",
-        "u8",
-        "sint",
-        "require",
-        "repeat",
-        "edebug-save-restriction",
-        "edebug-storing-offsets",
-        "edebug-tracing",
-        "edebug-changing-windows",
-        "edebug-outside-excursion",
-        "cl--parsing-keywords",
-        "cl--check-key",
-        "cl--check-test-nokey",
-        "cl--check-test",
-        "cl--check-match",
-        "define-generic-mode",
-        "foom",
-        "ad-do-advised-functions",
-        "defadvice",
-        "ad-with-originals"
-      ),
   },
 });

@@ -37,8 +37,7 @@ foo"
 
 (source
  (string)
- (string
-  (string_fragment))
+ (string (string_fragment))
  (string
   (escape_sequence))
  (string
@@ -58,42 +57,32 @@ foo"
  (string
   (escape_sequence (octal_esc))
   (string_fragment))
- (string
-  (string_fragment))
+ (string (string_fragment))
  (string
   (escape_sequence)
   (string_fragment))
  (function_definition
-  (paren_open)
   (symbol)
   (symbol)
-  (list
-   (paren_open)
-   (paren_close))
+  (list)
   (string
    (string_fragment)
    (lisp_code)
-   (string_fragment))
-  (paren_close))
+   (string_fragment)))
  (list
-  (paren_open)
   (symbol)
   (string (escape_sequence) (lisp_code))
   (string)
-  (symbol)
-  (paren_close))
+  (symbol))
  (list
-  (paren_open)
   (symbol)
-  (string (escape_sequence) (string_fragment))
-  (symbol)
-  (paren_close))
+  (string (escape_sequence)
+          (string_fragment))
+  (symbol))
  (list
-  (paren_open)
   (symbol)
   (string (escape_sequence)
           (string_fragment)
           (escape_sequence)
           (string_fragment))
-  (symbol)
-  (paren_close)))
+  (symbol)))
