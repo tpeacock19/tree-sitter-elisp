@@ -52,22 +52,23 @@
          (fn_quote value: (symbol) @font-lock-function-name-face)
          (list (dot) @font-lock-builtin-face)
          ;; comments
-         (comment
-          (lisp_code):* @font-lock-constant-face
-          (autoload (keyword):* @font-lock-warning-face
-            (function):* @font-lock-function-name-face):* @font-lock-comment-face)
+         (comment (lisp_code):* @font-lock-constant-face)
+         (autoload
+           (function):* @font-lock-function-name-face
+           (keyword) @font-lock-warning-face)
          ;; strings
-         (string
-          open: _ @font-lock-string-face
-          (lisp_code):* @font-lock-constant-face
-          (string_fragment):* @font-lock-string-face
-          close: _ @font-lock-string-face)
+         (string open: _ @font-lock-string-face)
+         (string (escape_sequence) @font-lock-string-face)
+         (string (string_fragment) @font-lock-string-face)
+         (string (lisp_code) @font-lock-type-face)
+         (string close: _ @font-lock-string-face)
 
-         docstring: (string
-                     open: _ @font-lock-doc-face
-                     (lisp_code):* @font-lock-constant-face
-                     (string_fragment):* @font-lock-doc-face
-                     close: _ @font-lock-doc-face)
+         docstring: (string open: _ @font-lock-doc-face)
+         docstring: (string (escape_sequence) @font-lock-doc-face)
+         docstring: (string (string_fragment) @font-lock-doc-face)
+         docstring: (string (lisp_code) @font-lock-type-face)
+         docstring: (string close: _ @font-lock-doc-face)
+
          ;; defined forms
          parameters: (list (symbol (param_keyword) @font-lock-type-face))
          parameters: (list (symbol) @font-lock-variable-name-face)

@@ -18,21 +18,20 @@ macro: (symbol) @keyword
 special_form: (symbol) @keyword
 marker: _ @operator
 ;; strings
-docstring: (string
-            open: _ @doc
-            (string_fragment)* @doc
-            (lisp_code)* @type
-            close: _ @doc)
+docstring: (string open: _ @doc)
+docstring: (string (escape_sequence) @doc)
+docstring: (string (string_fragment) @doc)
+docstring: (string (lisp_code) @type)
+docstring: (string close: _ @doc)
 
-(string
- open: _ @string
- (string_fragment)* @string
- (lisp_code)* @type
- close: _ @string)
+(string open: _ @string)
+(string (escape_sequence) @string)
+(string (string_fragment) @string)
+(string (lisp_code) @type)
+(string close: _ @string)
 ;; comments
-(comment
- (lisp_code)* @type
- (autoload (keyword)* @error (function)* @function))
+(comment (lisp_code) @type)
+(autoload (function)* @function (keyword) @error)
 ;; symbols
 (special_syntax (uninterned_symbol (symbol_name) @constant.builtin))
 (symbol (boolean) @constant.builtin)
