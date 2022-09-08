@@ -20,6 +20,7 @@ const PREC = {
   KWD_LIT: 4,
   SPECIAL: 5,
   META_LIT: 6,
+  GAP: 7,
 };
 
 const NULL = /\u0000/;
@@ -29,11 +30,7 @@ const ALPHANUMERIC = /[0-9a-zA-Z]/;
 const HEX_DIGIT = /[0-9a-fA-F]/;
 const OCTAL_DIGIT = /[0-7]/;
 const BINARY_DIGIT = /[0-1]/;
-const RADIX_DIGIT = choice(
-  /[2-9]/,
-  seq(/[1-2]/, DIGIT),
-  seq(/3/, /[0-6]/)
-);
+const RADIX_DIGIT = choice(/[2-9]/, seq(/[1-2]/, DIGIT), seq(/3/, /[0-6]/));
 
 // Special Syntax
 // (info "(elisp)Special Read Syntax")
@@ -53,11 +50,7 @@ const BYTE_COMPILED_FILE_NAME = token("#$");
 
 // Integers
 // (info "(elisp)Integer Basics")
-const BASE10_INTEGER = seq(
-  optional(/[+-]/),
-  repeat1(DIGIT),
-  optional(/\./)
-);
+const BASE10_INTEGER = seq(optional(/[+-]/), repeat1(DIGIT), optional(/\./));
 const INTEGER = choice(
   BASE10_INTEGER,
   HEX_SPECIAL,
@@ -67,11 +60,7 @@ const INTEGER = choice(
 );
 // Floating Points
 // (info "(elisp)Float Basics")
-const DECIMAL = seq(
-  optional(/[+-]/),
-  repeat(DIGIT),
-  seq(".", repeat1(DIGIT))
-);
+const DECIMAL = seq(optional(/[+-]/), repeat(DIGIT), seq(".", repeat1(DIGIT)));
 const EXPONENT = seq(
   optional(/[+-]/),
   repeat(DIGIT),
@@ -142,9 +131,7 @@ const ESC_SEQUENCE = choice(
 
 // const ASCII_CHAR = /[\u0000-\u007F]/;
 // const NON_BACKSLASH_ASCII_CHAR = /[\u0000-\u007F--[\\\(\)\[\];\"]]/;
-const ALPHA_ESC_CHAR = token(
-  seq(/\?/, choice(ALPHA_ESC, NON_BACKSLASH_CHAR))
-);
+const ALPHA_ESC_CHAR = token(seq(/\?/, choice(ALPHA_ESC, NON_BACKSLASH_CHAR)));
 const UNICODE_NAME_CHAR = token(seq(/\?/, UNICODE_NAME_ESC));
 const LOWER_CODE_POINT_CHAR = token(seq(/\?/, LOWER_UNICODE_ESC));
 const UPPER_CODE_POINT_CHAR = token(seq(/\?/, UPPER_UNICODE_ESC));
@@ -186,21 +173,21 @@ module.exports = grammar({
     // [$.autoload],
     // [$.circular_object],
     // [$._defun_header, $.symbol],
-    [$.variable_setter, $.symbol],
     [$.macro_definition, $.symbol],
-    [$.custom_definition, $.symbol],
+    // [$.custom_definition, $.symbol],
     [$.function_definition, $.symbol],
     [$.variable_definition, $.symbol],
-    [$.constant_definition, $.symbol],
+    [$.variable_setter, $.symbol],
+    [$.variable_binding, $.symbol],
   ],
 
-  word: ($) => $.identifier,
+  // word: ($) => $.identifier,
 
   rules: {
     source: ($) => repeat(choice($._gap, $._form)),
-    _gap: ($) => prec(5, $._ws),
+    _gap: ($) => prec(PREC.GAP, $._ws),
     _ws: (_) => WHITESPACE,
-    identifier: ($) => /[a-zA-Z_\\-]+/,
+    // identifier: ($) => /[a-zA-Z_\\-]+/,
 
     _paren_open: ($) => token.immediate("("),
     _paren_close: ($) => token.immediate(")"),
@@ -210,12 +197,12 @@ module.exports = grammar({
       prec.right(
         choice(
           // atoms
-          $.variable_setter,
           $.macro_definition,
           $.custom_definition,
-          $.variable_definition,
-          $.constant_definition,
           $.function_definition,
+          $.variable_definition,
+          $.variable_setter,
+          $.variable_binding,
           $.number,
           // $.special_form,
           $.special_syntax,
@@ -265,8 +252,7 @@ module.exports = grammar({
     integer: ($) => token(prec.right(INTEGER)),
 
     number: ($) => prec.left(choice($.float, $.integer)),
-    float: ($) =>
-      choice(prec.right(2, $.exponent), prec.left(1, $.decimal)),
+    float: ($) => choice(prec.right(2, $.exponent), prec.left(1, $.decimal)),
 
     char: ($) =>
       prec.left(
@@ -304,63 +290,49 @@ module.exports = grammar({
           // allow for dot to be symbol
           // TODO: only allow at end of list
           alias(token("."), $.dot),
-          choice("defun", "defsubst", "cl-defun", "cl-defsubst"),
-          choice("setq", "setq-local", "setq-default"),
-          choice("defmacro", "cl-defmacro"),
-          choice("defvar", "defcustom", "defconst")
+          token.immediate(/(cl-)?let(\*)?/),
+          token.immediate(/((cl-)?def(subst|un)|lambda)/),
+          token.immediate(/[a-z]?setq(-(local|default))?/),
+          token.immediate(/(cl-|pcase-)?def(ine-compiler-)?macro/),
+          token.immediate(/def(var|const)((-mode)?-local)?/)
         )
       ),
 
     quote: ($) => seq(field("marker", "'"), field("value", $._form)),
-    fn_quote: ($) =>
-      seq(field("marker", "#'"), field("value", $._form)),
-    backquote_eval: ($) =>
-      seq(field("marker", ","), field("value", $._form)),
+    fn_quote: ($) => seq(field("marker", "#'"), field("value", $._form)),
+    backquote_eval: ($) => seq(field("marker", ","), field("value", $._form)),
     splice: ($) => seq(field("marker", ",@"), field("value", $._form)),
-    backquote: ($) =>
-      seq(field("marker", "`"), field("value", $._form)),
+    backquote: ($) => seq(field("marker", "`"), field("value", $._form)),
 
-    dotted_pair_list: ($) =>
-      seq($._paren_open, $._dotted_pair, $._paren_close),
+    dotted_pair_list: ($) => seq($._paren_open, $._dotted_pair, $._paren_close),
     // prec.right(seq(token("("), $.dotted_pair, token(")"))),
     _dotted_pair: ($) =>
       seq(field("car", $._form), $.dot, field("cdr", $._form)),
 
-    list: ($) =>
-      seq($._paren_open, repeat(choice($._cons)), $._paren_close),
+    list: ($) => seq($._paren_open, repeat(choice($._cons)), $._paren_close),
     _cons: ($) =>
       prec.right(
-        1,
         seq(
           choice($._form),
           // dotted pair without quotations can be the cdr of a cons cell
           // TODO: Only allow in the final cons cell of list
-          optional(
-            choice($._cons, alias($._dotted_pair, $.dotted_pair))
-          )
+          optional(choice($._cons, alias($._dotted_pair, $.dotted_pair)))
         )
       ),
 
     string: ($) =>
-      prec(
-        2,
-        seq(
-          field("open", '"'),
-          repeat(
-            choice(
-              $.lisp_code,
-              alias(
-                $._unescaped_double_string_fragment,
-                $.string_fragment
-              ),
-              $.null,
-              $.escape_sequence
-            )
-          ),
-          field("close", token.immediate('"'))
-        )
+      seq(
+        field("open", '"'),
+        repeat(
+          choice(
+            $.lisp_code,
+            alias($._unescaped_double_string_fragment, $.string_fragment),
+            $.null,
+            $.escape_sequence
+          )
+        ),
+        field("close", token.immediate('"'))
       ),
-
     lisp_code: ($) =>
       token.immediate(
         prec.left(
@@ -376,10 +348,7 @@ module.exports = grammar({
     null: ($) => NULL,
     _unescaped_double_string_fragment: ($) =>
       token.immediate(
-        choice(
-          prec(2, /([^`"\\])+/),
-          prec(1, seq("`", optional(/([^'"\\])+/)))
-        )
+        choice(prec(2, /([^`"\\])+/), prec(1, seq("`", optional(/([^'"\\])+/))))
       ),
 
     unicode_name_esc: ($) => token(UNICODE_NAME_ESC),
@@ -447,15 +416,11 @@ module.exports = grammar({
       ),
     _autoload_header: ($) =>
       token.immediate(prec(3, seq(";;###", optional("(")))),
-    _comment_header: ($) =>
-      token.immediate(prec(3, seq(";;####", /[^`\n]+/))),
+    _comment_header: ($) => token.immediate(prec(3, seq(";;####", /[^`\n]+/))),
     autoload: ($) =>
       seq(
         $._autoload_header,
-        alias(
-          optional(token.immediate(seq(/[a-zA-Z\\]*/))),
-          $.function
-        ),
+        alias(optional(token.immediate(seq(/[a-zA-Z\\]*/))), $.function),
         optional("-"),
         alias("autoload", $.keyword)
       ),
@@ -468,63 +433,36 @@ module.exports = grammar({
         $._paren_close
       ),
 
-    special_form: ($) =>
-      prec.left(
-        PREC.KWD_LIT,
-        seq(
-          $._paren_open,
-          choice(
-            "and",
-            "catch",
-            "cond",
-            "condition-case",
-            "function",
-            "let",
-            "let*",
-            "or",
-            "prog1",
-            "prog2",
-            "progn",
-            "quote",
-            "save-current-buffer",
-            "save-excursion",
-            "save-restriction",
-            "unwind-protect",
-            "while"
-          ),
-          repeat($._form),
-          $._paren_close
-        )
-      ),
-
     variable_definition: ($) =>
       prec.right(
         PREC.NORMAL,
         seq(
           $._paren_open,
-          field("special_form", alias("defvar", $.symbol)),
-          field("name", $.symbol),
-          optional(field("initvalue", $._form)),
-          optional(field("docstring", $.string)),
+          field(
+            "special_form",
+            alias(token.immediate(/def(var|const)((-mode)?-local)?/), $.symbol)
+          ),
+          choice(
+            seq(field("name", $.symbol), field("initvalue", $._form)),
+            seq(
+              field("name", $.symbol),
+              field("initvalue", $._form),
+              field("docstring", $.string)
+            ),
+            seq(
+              field("mode", $.symbol),
+              field("name", $._form),
+              field("initvalue", $._form),
+              optional(field("docstring", $.string))
+            )
+          ),
           $._paren_close
         )
       ),
-    constant_definition: ($) =>
-      prec.right(
-        PREC.NORMAL,
-        seq(
-          $._paren_open,
-          field("special_form", alias("defconst", $.symbol)),
-          optional(repeat(field("comment", $.comment))),
-          field("name", $.symbol),
-          field("initvalue", $._form),
-          optional(field("docstring", $.string)),
-          $._paren_close
-        )
-      ),
+
     custom_definition: ($) =>
       prec.right(
-        PREC.NORMAL,
+        PREC.DEFINED,
         seq(
           $._paren_open,
           field("macro", alias("defcustom", $.symbol)),
@@ -578,12 +516,25 @@ module.exports = grammar({
           $._paren_open,
           field(
             "special_form",
-            alias(
-              choice("setq", "setq-local", "setq-default"),
-              $.symbol
-            )
+            alias(token.immediate(/[a-z]?setq(-(local|default))?/), $.symbol)
           ),
           repeat1(seq(field("name", $._form), field("value", $._form))),
+          $._paren_close
+        )
+      ),
+    variable_binding: ($) =>
+      prec.right(
+        PREC.NORMAL,
+        seq(
+          $._paren_open,
+          field(
+            "special_form",
+            alias(token.immediate(/(cl-)?let(\*)?/), $.symbol)
+          ),
+          $._paren_open,
+          field("bindings", repeat1(choice($.symbol, $.list))),
+          $._paren_close,
+          repeat($._form),
           $._paren_close
         )
       ),
@@ -593,28 +544,16 @@ module.exports = grammar({
         PREC.NORMAL,
         seq(
           $._paren_open,
-          choice(
-            seq(
-              field(
-                "macro",
-                alias(
-                  choice(
-                    "defun",
-                    "defsubst",
-                    "cl-defun",
-                    "cl-defsubst"
-                  ),
-                  $.symbol
-                )
-              ),
-              field("name", $.symbol),
-              field("parameters", $.list)
-            ),
-            seq(
-              field("macro", alias("lambda", $.symbol)),
-              field("lambda_list", $.list)
+          field(
+            "macro",
+            alias(
+              token.immediate(/((cl-)?def(subst|un)|lambda)/),
+              // choice("defun", "defsubst", "cl-defun", "cl-defsubst", "lambda"),
+              $.symbol
             )
           ),
+          optional(field("name", $.symbol)),
+          field("parameters", $.list),
           optional(field("docstring", $.string)),
           optional(field("interactive", $.interactive)),
           repeat($._form),
@@ -628,20 +567,18 @@ module.exports = grammar({
           $._paren_open,
           field(
             "macro",
-            alias(choice("defmacro", "cl-defmacro"), $.symbol)
+            alias(
+              token.immediate(/(cl-|pcase-)?def(ine-compiler-)?macro/),
+              $.symbol
+            )
           ),
           field("name", $._form),
           field("parameters", $.list),
-          field("docstring", optional($.string)),
+          optional(field("docstring", optional($.string))),
           optional(
             field(
               "declaration",
-              seq(
-                $._paren_open,
-                "declare",
-                repeat1($._form),
-                $._paren_close
-              )
+              seq($._paren_open, "declare", repeat1($._form), $._paren_close)
             )
           ),
           field("body", repeat($._form)),
@@ -668,8 +605,7 @@ module.exports = grammar({
     unreadable_form: ($) => UNREADABLE_FORM,
     no_read_syntax: ($) => seq("#<", /[^>]*/, ">"),
 
-    bytecode: ($) =>
-      prec(PREC.SPECIAL, seq("#[", repeat($._form), "]")),
+    bytecode: ($) => prec(PREC.SPECIAL, seq("#[", repeat($._form), "]")),
 
     record: ($) => prec(PREC.SPECIAL, seq("#s(", repeat($._form), ")")),
     hash_table: ($) => seq("#s(hash-table", repeat($._form), ")"),

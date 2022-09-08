@@ -3,19 +3,17 @@
 ;; defined forms
 (macro_definition name: (symbol) @function)
 (function_definition name: (symbol) @function)
-(variable_setter name: (symbol) @variable.parameter)
-(custom_definition name: (symbol) @variable.parameter)
-(constant_definition name: (symbol) @variable.parameter)
-(variable_definition name: (symbol) @variable.parameter)
+(variable_setter name: (symbol) @variable.argument)
+(custom_definition name: (symbol) @variable.argument)
+(variable_definition name: (symbol) @variable.argument)
 
 parameters: (list (symbol) @variable.parameter)
 parameters: (list (symbol (param_keyword) @type))
-lambda_list: (list (symbol) @variable.parameter)
-lambda_list: (list (symbol (param_keyword) @type))
 interactive: (interactive (special_form) @keyword)
 interactive: (interactive (string) @string)
 macro: (symbol) @keyword
 special_form: (symbol) @keyword
+mode: (symbol) @constant
 marker: _ @operator
 ;; strings
 docstring: (string open: _ @doc)

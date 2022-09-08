@@ -1,0 +1,36 @@
+================================================================================
+Vector syntax
+================================================================================
+
+#s(hash-table 0)
+[t t t t]
+#&128"\0\0\0\0\0\0\0\0\0\0\0\0\2\20\0\0"
+#^[t nil test t t t ]
+--------------------------------------------------------------------------------
+
+(source
+ (hash_table
+  (number
+   (integer)))
+ (vector
+  (symbol
+   (boolean))
+  (symbol
+   (boolean))
+  (symbol
+   (boolean))
+  (symbol
+   (boolean)))
+ (bool_vector)
+ (char_table
+  (symbol
+   (boolean))
+  (symbol
+   (boolean))
+  (symbol)
+  (symbol
+   (boolean))
+  (symbol
+   (boolean))
+  (symbol
+   (boolean))))

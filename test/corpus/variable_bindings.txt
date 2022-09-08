@@ -1,33 +1,25 @@
 ================================================================================
-Macro definition
+Variable Bindings
 ================================================================================
 
-(defmacro foo (x &optional y)
-  "stuff"
-  x)
+(cl-let ((a (foo)))
+        a)
 
-(cl-defmacro foo (x &optional y)
-             "stuff"
-             x)
+(let* ((a bar))
+  a)
 
 --------------------------------------------------------------------------------
 
 (source
- (macro_definition
-  (symbol)
+ (variable_binding
   (symbol)
   (list
    (symbol)
-   (symbol (param_keyword))
-   (symbol))
-  (string (string_fragment))
+   (list (symbol)))
   (symbol))
- (macro_definition
-  (symbol)
+ (variable_binding
   (symbol)
   (list
    (symbol)
-   (symbol (param_keyword))
    (symbol))
-  (string (string_fragment))
   (symbol)))

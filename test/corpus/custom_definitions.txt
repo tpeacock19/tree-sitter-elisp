@@ -1,0 +1,32 @@
+================================================================================
+Custom Definitions
+================================================================================
+(defvar foo bar)
+
+(defvar-local foo bar2
+  "Docstring")
+
+(defvar-mode-local foo-mode bar-var '(x y)
+  "Docstring")
+
+--------------------------------------------------------------------------------
+
+(source
+ (variable_definition
+  (symbol)
+  (symbol)
+  (symbol))
+ (variable_definition
+  (symbol)
+  (symbol)
+  (symbol)
+  (string
+   (string_fragment)))
+ (variable_definition
+  (symbol)
+  (symbol)
+  (symbol)
+  (quote (list (symbol)
+               (symbol)))
+  (string
+   (string_fragment))))

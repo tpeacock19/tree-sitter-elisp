@@ -72,16 +72,14 @@
          ;; defined forms
          parameters: (list (symbol (param_keyword) @font-lock-type-face))
          parameters: (list (symbol) @font-lock-variable-name-face)
-         lambda_list: (list (symbol (param_keyword) @font-lock-type-face))
-         lambda_list: (list (symbol) @font-lock-variable-name-face)
          interactive: (interactive (special_form) @font-lock-keyword-face)
          interactive: (interactive (string) @font-lock-string-face)
          macro: (symbol) @font-lock-keyword-face
+         mode: (symbol) @font-lock-constant-face
          special_form: (symbol) @font-lock-keyword-face
          marker: _ @bold
 
          (variable_definition name: (symbol) @font-lock-variable-name-face)
-         (constant_definition name: (symbol) @font-lock-variable-name-face)
          (custom_definition name: (symbol) @font-lock-variable-name-face)
          (variable_setter name: (symbol) @font-lock-variable-name-face)
          (function_definition name: (symbol) @font-lock-function-name-face)
