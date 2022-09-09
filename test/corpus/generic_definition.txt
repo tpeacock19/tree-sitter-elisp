@@ -1,0 +1,23 @@
+================================================================================
+Generic Definition
+================================================================================
+
+(cl-defstruct person
+              (first-name nil :read-only t)
+              age
+              (sex 'unknown))
+
+--------------------------------------------------------------------------------
+
+(source
+ (struct_definition
+  (symbol)
+  (symbol)
+  (slot
+   (symbol)
+   (symbol (boolean))
+   (keyword)
+   (symbol (boolean)))
+  (slot (symbol))
+  (slot (symbol)
+        (quote (symbol)))))

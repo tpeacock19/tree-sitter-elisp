@@ -174,6 +174,9 @@ module.exports = grammar({
     // [$.circular_object],
     // [$._defun_header, $.symbol],
     [$.macro_definition, $.symbol],
+    [$.struct_definition, $.symbol],
+    [$.generic_definition, $.symbol],
+    [$.method_definition, $.symbol],
     // [$.custom_definition, $.symbol],
     [$.function_definition, $.symbol],
     [$.variable_definition, $.symbol],
@@ -181,26 +184,33 @@ module.exports = grammar({
     [$.variable_binding, $.symbol],
   ],
 
-  // word: ($) => $.identifier,
+  word: ($) => $.identifier,
 
   rules: {
     source: ($) => repeat(choice($._gap, $._form)),
     _gap: ($) => prec(PREC.GAP, $._ws),
     _ws: (_) => WHITESPACE,
-    // identifier: ($) => /[a-zA-Z_\\-]+/,
+    identifier: ($) => RegExp(SYMBOL),
 
     _paren_open: ($) => token.immediate("("),
     _paren_close: ($) => token.immediate(")"),
     _brk_open: ($) => token.immediate("["),
     _brk_close: ($) => token.immediate("]"),
+    _definition: ($) =>
+      choice(
+        $.macro_definition,
+        $.struct_definition,
+        $.generic_definition,
+        $.method_definition,
+        $.custom_definition,
+        $.function_definition,
+        $.variable_definition
+      ),
     _form: ($) =>
       prec.right(
         choice(
           // atoms
-          $.macro_definition,
-          $.custom_definition,
-          $.function_definition,
-          $.variable_definition,
+          $._definition,
           $.variable_setter,
           $.variable_binding,
           $.number,
@@ -290,9 +300,10 @@ module.exports = grammar({
           // allow for dot to be symbol
           // TODO: only allow at end of list
           alias(token("."), $.dot),
+          choice("defcustom", "cl-defmethod", "cl-defstruct", "cl-defgeneric"),
           token.immediate(/(cl-)?let(\*)?/),
           token.immediate(/((cl-)?def(subst|un)|lambda)/),
-          token.immediate(/[a-z]?setq(-(local|default))?/),
+          token.immediate(/[a-z]?set(f|q)(-(local|default))?/),
           token.immediate(/(cl-|pcase-)?def(ine-compiler-)?macro/),
           token.immediate(/def(var|const)((-mode)?-local)?/)
         )
@@ -516,7 +527,10 @@ module.exports = grammar({
           $._paren_open,
           field(
             "special_form",
-            alias(token.immediate(/[a-z]?setq(-(local|default))?/), $.symbol)
+            alias(
+              token.immediate(/[a-z]?set(f|q)(-(local|default))?/),
+              $.symbol
+            )
           ),
           repeat1(seq(field("name", $._form), field("value", $._form))),
           $._paren_close
@@ -546,20 +560,18 @@ module.exports = grammar({
           $._paren_open,
           field(
             "macro",
-            alias(
-              token.immediate(/((cl-)?def(subst|un)|lambda)/),
-              // choice("defun", "defsubst", "cl-defun", "cl-defsubst", "lambda"),
-              $.symbol
-            )
+            alias(token.immediate(/((cl-)?def(subst|un)|lambda)/), $.symbol)
+            // choice("defun", "defsubst", "cl-defun", "cl-defsubst", "lambda"),
           ),
           optional(field("name", $.symbol)),
-          field("parameters", $.list),
+          field("arglist", $.list),
           optional(field("docstring", $.string)),
           optional(field("interactive", $.interactive)),
           repeat($._form),
           $._paren_close
         )
       ),
+
     macro_definition: ($) =>
       prec.right(
         PREC.NORMAL,
@@ -573,7 +585,7 @@ module.exports = grammar({
             )
           ),
           field("name", $._form),
-          field("parameters", $.list),
+          field("arglist", $.list),
           optional(field("docstring", optional($.string))),
           optional(
             field(
@@ -581,7 +593,113 @@ module.exports = grammar({
               seq($._paren_open, "declare", repeat1($._form), $._paren_close)
             )
           ),
-          field("body", repeat($._form)),
+          repeat($._form),
+          $._paren_close
+        )
+      ),
+    slot: ($) =>
+      prec.right(
+        choice(
+          field("name", $.symbol),
+          seq(
+            $._paren_open,
+            field("name", $.symbol),
+            field("default", $._form),
+            repeat(field("option", seq($.keyword, $._form))),
+            $._paren_close
+          )
+        )
+      ),
+    struct_definition: ($) =>
+      prec.right(
+        PREC.NORMAL,
+        seq(
+          $._paren_open,
+          field("macro", alias("cl-defstruct", $.symbol)),
+          field("name", choice($.symbol, $._form)),
+          optional(field("docstring", optional($.string))),
+          optional(field("slot", repeat($.slot))),
+          $._paren_close
+        )
+      ),
+    _generic_options: ($) =>
+      choice(
+        field(
+          "declaration",
+          seq($._paren_open, "declare", repeat1($._form), $._paren_close)
+        ),
+        field(
+          "documentation",
+          seq($._paren_open, ":documentation", $.string, $._paren_close)
+        ),
+        field(
+          "method",
+          seq(
+            $._paren_open,
+            ":method",
+            optional(
+              field(
+                "quailfiers",
+                seq(
+                  $._paren_open,
+                  token.immediate(/:(befo|a(fte)?)r(e|ound)?/),
+                  $.string,
+                  $._paren_close
+                )
+              )
+            ),
+            field("arglist", $.list),
+            repeat1($._form),
+            $._paren_close
+          )
+        ),
+        field(
+          "arg_order",
+          seq(
+            $._paren_open,
+            ":argument-precedence-order",
+            repeat1($._form),
+            $._paren_close
+          )
+        )
+      ),
+
+    generic_definition: ($) =>
+      prec.right(
+        PREC.NORMAL,
+        seq(
+          $._paren_open,
+          field("macro", alias("cl-defgeneric", $.symbol)),
+          field("name", $.symbol),
+          field("arglist", $.list),
+          optional(field("docstring", $.string)),
+          optional(field("options", $._generic_options)),
+          optional(field("default_body", repeat($._form))),
+          $._paren_close
+        )
+      ),
+    method_definition: ($) =>
+      prec.right(
+        PREC.NORMAL,
+        seq(
+          $._paren_open,
+          field("macro", alias("cl-method", $.symbol)),
+          field("name", $.symbol),
+          optional(field("extra", seq(":extra", $.string))),
+          optional(
+            field(
+              "quailfier",
+              seq(
+                $._paren_open,
+                token.immediate(/:(befo|a(fte)?)r(e|ound)?/),
+                $.string,
+                $._paren_close
+              )
+            )
+          ),
+          field("arglist", $.list),
+          optional(field("docstring", $.string)),
+          repeat($._form),
           $._paren_close
         )
       ),

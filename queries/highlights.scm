@@ -7,8 +7,8 @@
 (custom_definition name: (symbol) @variable.argument)
 (variable_definition name: (symbol) @variable.argument)
 
-parameters: (list (symbol) @variable.parameter)
-parameters: (list (symbol (param_keyword) @type))
+arglist: (list (symbol) @variable.parameter)
+arglist: (list (symbol (param_keyword) @type))
 interactive: (interactive (special_form) @keyword)
 interactive: (interactive (string) @string)
 macro: (symbol) @keyword
