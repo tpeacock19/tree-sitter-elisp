@@ -177,7 +177,7 @@ module.exports = grammar({
     [$.struct_definition, $.symbol],
     [$.generic_definition, $.symbol],
     [$.method_definition, $.symbol],
-    // [$.custom_definition, $.symbol],
+    [$.custom_definition, $.symbol],
     [$.function_definition, $.symbol],
     [$.variable_definition, $.symbol],
     [$.variable_setter, $.symbol],
@@ -443,7 +443,7 @@ module.exports = grammar({
               token.immediate(prec(2, seq("`", optional(/[^'"\n]+/))))
             )
           ),
-          token.immediate("\n")
+          $._newline
         )
       ),
     _autoload_header: ($) =>
@@ -495,40 +495,23 @@ module.exports = grammar({
 
     custom_definition: ($) =>
       prec.right(
-        PREC.DEFINED,
+        PREC.NORMAL,
         seq(
-          "(",
+          field("open", token.immediate("(")),
           field("macro", alias("defcustom", $.symbol)),
           field("name", $.symbol),
           field("standard", $._form),
           field("docstring", $.string),
-          // repeat(
-          //   seq(
-          //     field("key", alias($._custom_types, $.keyword)),
-          //     field("value", $._form)
-          //   )
-          // ),
           repeat(
-            choice(
-              seq(
-                field("key", alias($._custom_type_form, $.keyword)),
-                field("value", $._form)
-              ),
-              seq(
-                field("key", alias($._custom_type_quote, $.keyword)),
-                field("value", choice($.quote, $.symbol))
-              ),
-              seq(
-                field("key", alias($._custom_type_string, $.keyword)),
-                field("value", $.string)
-              )
+            seq(
+              field("key", alias($._custom_args, $.keyword)),
+              field("value", $._form)
             )
           ),
-          ")"
+          field("close", token.immediate(")"))
         )
       ),
-    _custom_type_form: ($) => choice(":initialize", ":set", ":get"),
-    _custom_type_quote: ($) =>
+    _custom_args: ($) =>
       choice(
         ":type",
         ":options",
@@ -539,9 +522,14 @@ module.exports = grammar({
         ":local",
         ":group",
         ":link",
-        ":package-version"
+        ":package-version",
+        ":version",
+        ":tag",
+        ":load",
+        ":initialize",
+        ":set",
+        ":get"
       ),
-    _custom_type_string: ($) => choice(":version", ":tag", ":load"),
     variable_setter: ($) =>
       prec.right(
         PREC.NORMAL,
