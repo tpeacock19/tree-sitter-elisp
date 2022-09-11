@@ -229,7 +229,7 @@ module.exports = grammar({
           $.interactive,
           $.list,
           // $.keyword,
-          alias($.dotted_pair_list, $.list),
+          $._dotted_pair_list,
           // some other reader macros
           $.fn_quote,
           $.quote,
@@ -255,14 +255,19 @@ module.exports = grammar({
       ),
 
     text_properties: ($) =>
-      seq("#(", $.string, repeat(seq($._form, $._form, $._form)), ")"),
+      seq(
+        "#(",
+        $.string,
+        repeat(seq($._form, $._form, $._form)),
+        field("close", token.immediate(")"))
+      ),
 
-    exponent: ($) => token(prec(PREC.EXP_LIT, EXPONENT)),
-    decimal: ($) => token(prec(PREC.FLOAT_LIT, DECIMAL)),
-    integer: ($) => token(prec.right(INTEGER)),
+    exponent: ($) => prec(PREC.EXP_LIT, token.immediate(EXPONENT)),
+    decimal: ($) => prec(PREC.FLOAT_LIT, token.immediate(DECIMAL)),
+    integer: ($) => prec.right(token.immediate(INTEGER)),
 
-    number: ($) => prec.left(choice($.float, $.integer)),
-    float: ($) => choice(prec.right(2, $.exponent), prec.left(1, $.decimal)),
+    float: ($) => choice(prec.right(2, $.exponent), prec.right(1, $.decimal)),
+    number: ($) => prec.right(choice($.float, $.integer)),
 
     char: ($) =>
       prec.left(
@@ -309,44 +314,63 @@ module.exports = grammar({
         )
       ),
 
-    quote: ($) => seq(field("marker", "'"), field("value", $._form)),
-    fn_quote: ($) => seq(field("marker", "#'"), field("value", $._form)),
-    backquote_eval: ($) => seq(field("marker", ","), field("value", $._form)),
-    splice: ($) => seq(field("marker", ",@"), field("value", $._form)),
-    backquote: ($) => seq(field("marker", "`"), field("value", $._form)),
+    quote: ($) => seq(field("marker", "'"), $._form),
+    fn_quote: ($) => seq(field("marker", "#'"), $._form),
+    backquote_eval: ($) => seq(field("marker", ","), $._form),
+    splice: ($) => seq(field("marker", ",@"), $._form),
+    backquote: ($) => seq(field("marker", "`"), $._form),
 
-    dotted_pair_list: ($) => seq("(", $._dotted_pair, ")"),
-    // prec.right(seq(token("("), $.dotted_pair, token(")"))),
-    _dotted_pair: ($) =>
-      seq(field("car", $._form), $.dot, field("cdr", $._form)),
+    _dotted_pair_list: ($) =>
+      seq(
+        field("open", token.immediate("(")),
+        $.dotted_pair,
+        field("close", token.immediate(")"))
+      ),
 
-    list: ($) => seq("(", repeat(choice($._cons)), ")"),
+    dotted_pair: ($) =>
+      prec.right(
+        PREC.NORMAL,
+        seq(field("car", $._form), $.dot, field("cdr", $._form))
+      ),
+
+    list: ($) =>
+      seq(
+        field("open", token.immediate("(")),
+        repeat($._cons),
+        field("close", token.immediate(")"))
+      ),
     _cons: ($) =>
       prec.right(
         seq(
-          choice($._form),
+          $._form,
           // dotted pair without quotations can be the cdr of a cons cell
           // TODO: Only allow in the final cons cell of list
-          optional(choice($._cons, alias($._dotted_pair, $.dotted_pair)))
+          optional(choice($._cons, $.dotted_pair))
         )
       ),
 
     string: ($) =>
-      seq(
-        field("open", '"'),
-        repeat(
-          choice(
-            $.lisp_code,
-            alias($._unescaped_double_string_fragment, $.string_fragment),
-            $.null,
-            $.escape_sequence
-          )
-        ),
-        field("close", token.immediate('"'))
+      prec(
+        2,
+        seq(
+          field("open", token.immediate('"')),
+          repeat(
+            choice(
+              $.lisp_code,
+              alias(
+                choice(";", $._unescaped_double_string_fragment),
+                $.string_fragment
+              ),
+              $.null,
+              $.escape_sequence
+            )
+          ),
+          field("close", token.immediate('"'))
+        )
       ),
     lisp_code: ($) =>
       token.immediate(
-        prec.left(
+        prec.right(
           3,
           choice(
             // Allow for escaped quotation mark in lisp-code
@@ -403,6 +427,7 @@ module.exports = grammar({
         choice(/\^./, repeat($._octal_esc)),
         field("close", /"/)
       ),
+    _newline: ($) => token.immediate(/\n?/),
 
     comment: ($) =>
       prec(
@@ -423,11 +448,12 @@ module.exports = grammar({
       ),
     _autoload_header: ($) =>
       token.immediate(prec(3, seq(";;###", optional("(")))),
-    _comment_header: ($) => token.immediate(prec(3, seq(";;####", /[^`\n]+/))),
+    _comment_header: ($) =>
+      token.immediate(prec(3, seq(choice(";;### ", ";;####"), /[^`\n]+/))),
     autoload: ($) =>
       seq(
         $._autoload_header,
-        alias(optional(token.immediate(seq(/[a-zA-Z\\]*/))), $.function),
+        alias(optional(token.immediate(seq(/[a-zA-Z\\]+/))), $.function),
         optional("-"),
         alias("autoload", $.keyword)
       ),
