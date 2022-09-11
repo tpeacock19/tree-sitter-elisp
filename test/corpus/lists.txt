@@ -35,11 +35,11 @@ Lists
    (symbol)
    (symbol)))
  (list
-  (list
+  (dotted_pair
    (symbol) (dot) (symbol))
-  (list
+  (dotted_pair
    (symbol) (dot) (symbol)))
  (list
-  (list
+  (dotted_pair
    (symbol) (dot) (symbol))
   (number (integer))))

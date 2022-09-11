@@ -1,32 +1,30 @@
 ================================================================================
 Custom Definition
 ================================================================================
-(defvar foo bar)
 
-(defvar-local foo bar2
-  "Docstring")
+(defcustom add-log-dont-create-changelog-file t
+  "If non-nil, don't create ChangeLog files for log entries.
+If a ChangeLog file does not already exist, a non-nil value
+means to put log entries in a suitably named buffer."
+  :type 'boolean
+  :safe #'booleanp
+  :version "27.1")
 
-(defvar-mode-local foo-mode bar-var '(x y)
-  "Docstring")
+(defcustom)
 
 --------------------------------------------------------------------------------
 
 (source
- (variable_definition
+ (custom_definition
   (symbol)
   (symbol)
-  (symbol))
- (variable_definition
-  (symbol)
-  (symbol)
-  (symbol)
-  (string
-   (string_fragment)))
- (variable_definition
-  (symbol)
-  (symbol)
-  (symbol)
-  (quote (list (symbol)
-               (symbol)))
-  (string
-   (string_fragment))))
+  (symbol (boolean))
+  (string (string_fragment))
+  (keyword)
+  (quote (symbol))
+  (keyword)
+  (fn_quote (symbol))
+  (keyword)
+  (string (string_fragment)))
+ (list
+  (symbol)))

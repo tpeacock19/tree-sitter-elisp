@@ -1,4 +1,5 @@
-;; order must go from most specific to generic
+;; order must go from most specific to generic for 'elisp-tree-sitter` package
+;; https://github.com/emacs-tree-sitter/elisp-tree-sitter
 
 ;; defined forms
 (macro_definition name: (symbol) @function)
@@ -35,8 +36,8 @@ docstring: (string close: _ @doc)
 (symbol (boolean) @constant.builtin)
 (symbol (keyword) @variable.builtin)
 (symbol (param_keyword) @type)
-(list (dot) @constant.builtin)
-(fn_quote value: (symbol) @function)
+(dotted_pair (dot) @constant.builtin)
+(fn_quote (symbol) @function)
 (quote (symbol) @constant)
 ;; misc
 (number) @number
