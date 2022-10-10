@@ -412,7 +412,11 @@ module.exports = grammar({
       ),
 
     vector: ($) =>
-      seq("[", repeat(choice(field("value", $._form), $._gap)), "]"),
+      seq(
+        field("open", "["),
+        repeat(choice(field("value", $._form), $._gap)),
+        field("close", "]")
+      ),
 
     char_table: ($) =>
       seq(
@@ -427,9 +431,8 @@ module.exports = grammar({
         repeat(DIGIT),
         /"/,
         choice(/\^./, repeat($._octal_esc)),
-        field("close", /"/)
+        field("close", token.immediate(/"/))
       ),
-    _newline: ($) => token.immediate(/\n?/),
 
     comment: ($) =>
       prec(
@@ -438,14 +441,13 @@ module.exports = grammar({
           ";",
           repeat(
             choice(
-              // seq($.fn_autoload, $.autokey),
               choice($.autoload, $._comment_header),
               $.lisp_code,
               token.immediate(prec(2, /[^`\n]+/)),
               token.immediate(prec(2, seq("`", optional(/[^'"\n]+/))))
             )
           ),
-          $._newline
+          token.immediate(/\n/)
         )
       ),
     _autoload_header: ($) =>
@@ -461,18 +463,18 @@ module.exports = grammar({
       ),
     interactive: ($) =>
       seq(
-        "(",
+        field("open", token.immediate("(")),
         alias("interactive", $.special_form),
         optional($._form),
         optional(choice($.list, repeat1(prec(1, $.symbol)))),
-        ")"
+        field("close", token.immediate(")"))
       ),
 
     variable_definition: ($) =>
       prec.right(
         PREC.NORMAL,
         seq(
-          "(",
+          field("open", token.immediate("(")),
           field(
             "special_form",
             alias(token.immediate(/def(var|const)((-mode)?-local)?/), $.symbol)
@@ -491,7 +493,7 @@ module.exports = grammar({
               optional(field("docstring", $.string))
             )
           ),
-          ")"
+          field("close", token.immediate(")"))
         )
       ),
 
@@ -536,7 +538,7 @@ module.exports = grammar({
       prec.right(
         PREC.NORMAL,
         seq(
-          "(",
+          field("open", token.immediate("(")),
           field(
             "special_form",
             alias(
@@ -545,7 +547,7 @@ module.exports = grammar({
             )
           ),
           repeat1(seq(field("name", $._form), field("value", $._form))),
-          ")"
+          field("close", token.immediate(")"))
         )
       ),
     _variable_bindings: ($) =>
@@ -564,23 +566,23 @@ module.exports = grammar({
       prec.right(
         PREC.NORMAL,
         seq(
-          "(",
+          field("open", token.immediate("(")),
           field(
             "special_form",
             alias(token.immediate(/((cl|when|if)-)?let(f|\*)?/), $.symbol)
           ),
-          "(",
-          ")",
+          field("open", token.immediate("(")),
           field("bindings", alias($._variable_bindings, $.list)),
+          field("close", token.immediate(")")),
           repeat($._form),
-          ")"
+          field("close", token.immediate(")"))
         )
       ),
     function_definition: ($) =>
       prec.right(
         PREC.NORMAL,
         seq(
-          "(",
+          field("open", token.immediate("(")),
           field(
             "macro",
             alias(token.immediate(/((cl-)?def(subst|un)|lambda)/), $.symbol)
@@ -590,7 +592,7 @@ module.exports = grammar({
           optional(field("docstring", $.string)),
           optional(field("interactive", $.interactive)),
           repeat($._form),
-          ")"
+          field("close", token.immediate(")"))
         )
       ),
     _function_bindings: ($) =>
@@ -625,7 +627,7 @@ module.exports = grammar({
       prec.right(
         PREC.NORMAL,
         seq(
-          "(",
+          field("open", token.immediate("(")),
           field(
             "macro",
             alias(
@@ -637,10 +639,18 @@ module.exports = grammar({
           field("arglist", $.list),
           optional(field("docstring", optional($.string))),
           optional(
-            field("declaration", seq("(", "declare", repeat1($._form), ")"))
+            field(
+              "declaration",
+              seq(
+                field("open", token.immediate("(")),
+                "declare",
+                repeat1($._form),
+                field("close", token.immediate(")"))
+              )
+            )
           ),
           repeat($._form),
-          ")"
+          field("close", token.immediate(")"))
         )
       ),
     slot: ($) =>
@@ -648,11 +658,11 @@ module.exports = grammar({
         choice(
           field("name", $.symbol),
           seq(
-            "(",
+            field("open", token.immediate("(")),
             field("name", $.symbol),
             field("default", $._form),
             repeat(field("option", seq($.keyword, $._form))),
-            ")"
+            field("close", token.immediate(")"))
           )
         )
       ),
@@ -660,42 +670,63 @@ module.exports = grammar({
       prec.right(
         PREC.NORMAL,
         seq(
-          "(",
+          field("open", token.immediate("(")),
           field("macro", alias("cl-defstruct", $.symbol)),
           field("name", choice($.symbol, $._form)),
           optional(field("docstring", optional($.string))),
           optional(field("slot", repeat($.slot))),
-          ")"
+          field("close", token.immediate(")"))
         )
       ),
     _generic_options: ($) =>
       choice(
-        field("declaration", seq("(", "declare", repeat1($._form), ")")),
-        field("documentation", seq("(", ":documentation", $.string, ")")),
+        field(
+          "declaration",
+          seq(
+            field("open", token.immediate("(")),
+            "declare",
+            repeat1($._form),
+            field("close", token.immediate(")"))
+          )
+        ),
+        field(
+          "documentation",
+          seq(
+            field("open", token.immediate("(")),
+            ":documentation",
+            $.string,
+            field("close", token.immediate(")"))
+          )
+        ),
         field(
           "method",
           seq(
-            "(",
+            field("open", token.immediate("(")),
             ":method",
             optional(
               field(
                 "quailfiers",
                 seq(
-                  "(",
+                  field("open", token.immediate("(")),
                   token.immediate(/:(befo|a(fte)?)r(e|ound)?/),
                   $.string,
-                  ")"
+                  field("close", token.immediate(")"))
                 )
               )
             ),
             field("arglist", $.list),
             repeat1($._form),
-            ")"
+            field("close", token.immediate(")"))
           )
         ),
         field(
           "arg_order",
-          seq("(", ":argument-precedence-order", repeat1($._form), ")")
+          seq(
+            field("open", token.immediate("(")),
+            ":argument-precedence-order",
+            repeat1($._form),
+            field("close", token.immediate(")"))
+          )
         )
       ),
 
@@ -703,21 +734,21 @@ module.exports = grammar({
       prec.right(
         PREC.NORMAL,
         seq(
-          "(",
+          field("open", token.immediate("(")),
           field("macro", alias("cl-defgeneric", $.symbol)),
           field("name", $.symbol),
           field("arglist", $.list),
           optional(field("docstring", $.string)),
           optional(field("options", $._generic_options)),
           optional(field("default_body", repeat($._form))),
-          ")"
+          field("close", token.immediate(")"))
         )
       ),
     method_definition: ($) =>
       prec.right(
         PREC.NORMAL,
         seq(
-          "(",
+          field("open", token.immediate("(")),
           field("macro", alias("cl-method", $.symbol)),
           field("name", $.symbol),
           optional(field("extra", seq(":extra", $.string))),
@@ -725,24 +756,27 @@ module.exports = grammar({
             field(
               "quailfier",
               seq(
-                "(",
+                field("open", token.immediate("(")),
                 token.immediate(/:(befo|a(fte)?)r(e|ound)?/),
                 $.string,
-                ")"
+                field("close", token.immediate(")"))
               )
             )
           ),
           field("arglist", $.list),
           optional(field("docstring", $.string)),
           repeat($._form),
-          ")"
+          field("close", token.immediate(")"))
         )
       ),
 
     byte_compiled_file_name: ($) => BYTE_COMPILED_FILE_NAME,
     interned_empty_string: ($) => INTERNED_EMPTY_STRING,
     uninterned_symbol: ($) =>
-      seq(/#/, alias(token(seq(/:/, repeat1(WORD))), $.symbol_name)),
+      seq(
+        token.immediate(/#/),
+        alias(token(seq(/:/, repeat1(WORD))), $.symbol_name)
+      ),
     circular_object: ($) =>
       prec.right(
         2,
@@ -756,11 +790,33 @@ module.exports = grammar({
 
     circular_ref: ($) => CIRCULAR_REF,
     unreadable_form: ($) => UNREADABLE_FORM,
-    no_read_syntax: ($) => seq("#<", /[^>]*/, ">"),
+    no_read_syntax: ($) =>
+      seq(field("open", token.immediate("#<")), /[^>]*/, token.immediate(">")),
 
-    bytecode: ($) => prec(PREC.SPECIAL, seq("#[", repeat($._form), "]")),
+    bytecode: ($) =>
+      prec(
+        PREC.SPECIAL,
+        seq(
+          field("open", token.immediate("#[")),
+          repeat($._form),
+          token.immediate("]")
+        )
+      ),
 
-    record: ($) => prec(PREC.SPECIAL, seq("#s(", repeat($._form), ")")),
-    hash_table: ($) => seq("#s(hash-table", repeat($._form), ")"),
+    record: ($) =>
+      prec(
+        PREC.SPECIAL,
+        seq(
+          field("open", token.immediate("#s(")),
+          repeat($._form),
+          field("close", token.immediate(")"))
+        )
+      ),
+    hash_table: ($) =>
+      seq(
+        field("open", token.immediate("#s(hash-table")),
+        repeat($._form),
+        field("close", token.immediate(")"))
+      ),
   },
 });
