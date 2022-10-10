@@ -172,7 +172,6 @@ module.exports = grammar({
   conflicts: ($) => [
     // [$.autoload],
     // [$.circular_object],
-    // [$._defun_header, $.symbol],
     [$.macro_definition, $.symbol],
     [$.struct_definition, $.symbol],
     [$.generic_definition, $.symbol],
@@ -182,6 +181,7 @@ module.exports = grammar({
     [$.variable_definition, $.symbol],
     [$.variable_setter, $.symbol],
     [$.variable_binding, $.symbol],
+    [$.function_binding, $.symbol],
   ],
 
   word: ($) => $.identifier,
@@ -190,7 +190,7 @@ module.exports = grammar({
     source: ($) => repeat(choice($._gap, $._form)),
     _gap: ($) => prec(PREC.GAP, $._ws),
     _ws: (_) => WHITESPACE,
-    identifier: ($) => RegExp(SYMBOL),
+    identifier: ($) => RegExp($.symbol),
 
     _paren_open: ($) => token.immediate("("),
     _paren_close: ($) => token.immediate(")"),
@@ -213,6 +213,7 @@ module.exports = grammar({
           $._definition,
           $.variable_setter,
           $.variable_binding,
+          $.function_binding,
           $.number,
           // $.special_form,
           $.special_syntax,
@@ -306,7 +307,8 @@ module.exports = grammar({
           // TODO: only allow at end of list
           alias(token("."), $.dot),
           choice("defcustom", "cl-defmethod", "cl-defstruct", "cl-defgeneric"),
-          token.immediate(/(cl-)?let(\*)?/),
+          token.immediate(/((cl|when|if)-)?let(f|\*)?/),
+          token.immediate(/cl-(flet(\*)?|labels)/),
           token.immediate(/((cl-)?def(subst|un)|lambda)/),
           token.immediate(/[a-z]?set(f|q)(-(local|default))?/),
           token.immediate(/(cl-|pcase-)?def(ine-compiler-)?macro/),
@@ -447,7 +449,7 @@ module.exports = grammar({
         )
       ),
     _autoload_header: ($) =>
-      token.immediate(prec(3, seq(";;###", optional("(")))),
+      token.immediate(prec(3, choice(";;###", ";;###("))),
     _comment_header: ($) =>
       token.immediate(prec(3, seq(choice(";;### ", ";;####"), /[^`\n]+/))),
     autoload: ($) =>
@@ -546,6 +548,18 @@ module.exports = grammar({
           ")"
         )
       ),
+    _variable_bindings: ($) =>
+      repeat1(
+        choice(
+          field("name", $.symbol),
+          seq(
+            field("open", token.immediate("(")),
+            field("name", $.symbol),
+            field("value", $._form),
+            field("close", token.immediate(")"))
+          )
+        )
+      ),
     variable_binding: ($) =>
       prec.right(
         PREC.NORMAL,
@@ -553,16 +567,15 @@ module.exports = grammar({
           "(",
           field(
             "special_form",
-            alias(token.immediate(/(cl-)?let(\*)?/), $.symbol)
+            alias(token.immediate(/((cl|when|if)-)?let(f|\*)?/), $.symbol)
           ),
           "(",
-          field("bindings", repeat1(choice($.symbol, $.list))),
           ")",
+          field("bindings", alias($._variable_bindings, $.list)),
           repeat($._form),
           ")"
         )
       ),
-    // _defun_header: ($) => prec.right(PREC.NORMAL),
     function_definition: ($) =>
       prec.right(
         PREC.NORMAL,
@@ -571,7 +584,6 @@ module.exports = grammar({
           field(
             "macro",
             alias(token.immediate(/((cl-)?def(subst|un)|lambda)/), $.symbol)
-            // choice("defun", "defsubst", "cl-defun", "cl-defsubst", "lambda"),
           ),
           optional(field("name", $.symbol)),
           field("arglist", $.list),
@@ -579,6 +591,33 @@ module.exports = grammar({
           optional(field("interactive", $.interactive)),
           repeat($._form),
           ")"
+        )
+      ),
+    _function_bindings: ($) =>
+      repeat1(
+        seq(
+          field("open", token.immediate("(")),
+          field("name", $.symbol),
+          field("arglist", $.list),
+          repeat1($._form),
+          field("close", token.immediate(")"))
+        )
+      ),
+
+    function_binding: ($) =>
+      prec.right(
+        PREC.NORMAL,
+        seq(
+          field("open", token.immediate("(")),
+          field(
+            "macro",
+            alias(token.immediate(/cl-(flet(\*)?|labels)/), $.symbol)
+          ),
+          field("open", token.immediate("(")),
+          field("bindings", alias($._function_bindings, $.list)),
+          field("close", token.immediate(")")),
+          repeat($._form),
+          field("close", token.immediate(")"))
         )
       ),
 
